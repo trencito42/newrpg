@@ -275,9 +275,24 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
             TriggerEvent('sunset:phone:cameraStart', data)
             return
         end
-        if op == 'cameraClose' or op == 'cameraFlip' or op == 'cameraLook' or op == 'cameraZoom' or op == 'cameraShutter' then
-            local map = { cameraClose = 'close', cameraFlip = 'flip', cameraLook = 'look', cameraZoom = 'zoom', cameraShutter = 'shutter' }
-            TriggerEvent('sunset:phone:cameraControl', { op = map[op], dx = data.dx, dy = data.dy, delta = data.delta })
+        if op == 'cameraClose' or op == 'cameraFlip' or op == 'cameraLook' or op == 'cameraZoom'
+            or op == 'cameraShutter' or op == 'cameraLens' then
+            local map = {
+                cameraClose = 'close',
+                cameraFlip = 'flip',
+                cameraLook = 'look',
+                cameraZoom = 'zoom',
+                cameraShutter = 'shutter',
+                cameraLens = 'lens',
+            }
+            TriggerEvent('sunset:phone:cameraControl', {
+                op = map[op],
+                dx = data.dx,
+                dy = data.dy,
+                delta = data.delta,
+                lens = data.lens,
+                aim = data.aim == true,
+            })
             return
         end
         if op == 'gallery' then
@@ -436,22 +451,28 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
         -- ========== SOCIAL FEED OPS ==========
         if op == 'feedLike' then
             local res = Sunset.AwaitCallback('social:likePost', tonumber(data.postId))
+            local ok = type(res) == 'table' and res.ok ~= false
             exports.sunset_ui:Send('phoneActionResult', {
-                op = 'feedLike', ok = type(res) == 'table' and res.ok ~= false,
+                op = 'feedLike',
+                ok = ok,
                 postId = data.postId,
-                likesCount = type(res) == 'table' and res.likesCount or nil,
-                likedByViewer = true,
+                likesCount = ok and type(res) == 'table' and res.likesCount or nil,
+                likedByViewer = ok,
+                seq = tonumber(data.seq),
             })
             return
         end
 
         if op == 'feedUnlike' then
             local res = Sunset.AwaitCallback('social:unlikePost', tonumber(data.postId))
+            local ok = type(res) == 'table' and res.ok ~= false
             exports.sunset_ui:Send('phoneActionResult', {
-                op = 'feedLike', ok = type(res) == 'table' and res.ok ~= false,
+                op = 'feedLike',
+                ok = ok,
                 postId = data.postId,
-                likesCount = type(res) == 'table' and res.likesCount or nil,
+                likesCount = ok and type(res) == 'table' and res.likesCount or nil,
                 likedByViewer = false,
+                seq = tonumber(data.seq),
             })
             return
         end
@@ -472,7 +493,12 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
                     commentsCount = res.commentsCount,
                 })
             else
-                exports.sunset_ui:Send('phoneActionResult', { op = 'feedComment', ok = false, postId = data.postId })
+                exports.sunset_ui:Send('phoneActionResult', {
+                    op = 'feedComment',
+                    ok = false,
+                    postId = data.postId,
+                    error = PhoneExplain and PhoneExplain(res, 'phone.ui.action_failed') or nil,
+                })
             end
             return
         end
@@ -497,6 +523,18 @@ AddEventHandler('sunset:nui:phoneAction', function(data)
         if op == 'feedDeletePost' then
             local res = Sunset.AwaitCallback('social:deletePost', tonumber(data.postId))
             exports.sunset_ui:Send('phoneActionResult', { op = 'feedDeletePost', ok = type(res) == 'table' and res.ok ~= false })
+            return
+        end
+
+        if op == 'feedRefresh' then
+            local feedData = Sunset.AwaitCallback('social:getFeed', { feed = 'global', limit = 20 }) or {}
+            local contactsData = Sunset.AwaitCallback('social:getFeed', { feed = 'contacts', limit = 20 }) or {}
+            sendApp('feed', {
+                refresh = true,
+                refreshSeq = tonumber(data.refreshSeq),
+                global   = { posts = feedData.posts or {}, nextCursor = feedData.nextCursor },
+                contacts = { posts = contactsData.posts or {}, nextCursor = contactsData.nextCursor },
+            }, token)
             return
         end
 

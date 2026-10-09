@@ -56,8 +56,7 @@ body {
   padding: 0;
   background-color: var(--background);
   color: var(--foreground);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
+  font-family: var(--font-proxima), "Proxima Nova", sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
   min-height: 100dvh;
@@ -167,7 +166,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-heading), Montserrat, system-ui, sans-serif;
+  font-family: var(--font-proxima), "Proxima Nova", sans-serif;
   color: var(--foreground);
   letter-spacing: 0.02em;
 }

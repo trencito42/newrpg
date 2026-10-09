@@ -71,6 +71,33 @@ test('camera is a scripted camera with cleanup', () => {
     assert.doesNotMatch(camera, /data:image/);
 });
 
+test('rear camera faces forward with lens FOV presets and local ped hide', () => {
+    assert.match(camera, /GetOffsetFromEntityInWorldCoords\(ped, 0\.0, 0\.36, 0\.66\)/);
+    assert.match(camera, /SetEntityLocallyInvisible/);
+    assert.match(camera, /SetEntityLocallyVisible/);
+    assert.match(camera, /\['0\.5'\] = 90\.0/);
+    assert.match(camera, /\['1'\] = 55\.0/);
+    assert.match(camera, /\['2'\] = 32\.0/);
+    assert.match(camera, /SetCamFov/);
+    assert.doesNotMatch(camera, /coords\.x - math\.sin\(-rad\) \* dist/);
+});
+
+test('camera look requires explicit aim flag from NUI', () => {
+    assert.match(camera, /data\.aim ~= true/);
+    assert.match(phoneJs, /op: 'cameraLook'.*aim: true/);
+    assert.match(phoneJs, /pointerdown/);
+    assert.match(phoneJs, /event\.button !== 2/);
+    assert.match(phoneJs, /captureState/);
+    assert.match(phoneJs, /cameraLens/);
+});
+
+test('phone camera HUD exposes lens selector and capture states', () => {
+    assert.match(phoneJs, /phone-camera-lenses/);
+    assert.match(phoneJs, /camera_saving/);
+    assert.match(phoneJs, /camera_saved_gallery/);
+    assert.match(read('resources/[sunset]/sunset_ui/web/modules/phone/index.html'), /data-lens="0\.5"/);
+});
+
 test('phone UI does not preload the gallery or trust arbitrary image URLs', () => {
     assert.match(state, /'camera'/);
     assert.match(state, /'gallery'/);

@@ -993,8 +993,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     color: #fff;
+    font-family: var(--font-heading);
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     text-shadow: 0 1px 4px #000;
 }
 .forza-speedo-canvas {
@@ -1182,7 +1183,7 @@
 }
 
 .veh-hints__label {
-    font-family: var(--sunset-display, 'Chakra Petch', sans-serif);
+    font-family: var(--font-heading);
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.18em;
@@ -1205,7 +1206,7 @@
     border-bottom-width: 4px;
     border-radius: 6px;
     color: #fff;
-    font-family: var(--sunset-display, 'Chakra Petch', sans-serif);
+    font-family: var(--font-heading);
     font-size: 20px;
     font-weight: 700;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);

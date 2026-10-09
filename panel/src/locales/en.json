@@ -134,7 +134,9 @@
     "comments_label": "comments",
     "likes_and_comments": "{likes} likes · {comments} comments",
     "latest_activity": "Latest activity",
-    "latest_forum_discussions": "Latest forum discussions"
+    "latest_forum_discussions": "Latest forum discussions",
+    "for_you_feed": "For you on RACKET",
+    "shared_photo": "Shared a photo"
   },
   "forumUi": {
     "title": "Forum",

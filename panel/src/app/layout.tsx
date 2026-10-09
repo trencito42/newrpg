@@ -1,13 +1,23 @@
 import { LocaleProvider } from "@/components/LocaleProvider";
 import type { Metadata, Viewport } from "next";
-import { Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const montserrat = Montserrat({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-heading",
+const proximaNova = localFont({
+  src: [
+    {
+      path: "../../public/fonts/proxima-nova-regular.otf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/proxima-nova-bold.otf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-proxima",
   display: "swap",
-  weight: ["500", "600", "700", "800", "900"],
 });
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { toViewerSessionDTO } from "@/lib/session-dto";
@@ -53,7 +63,7 @@ export default async function RootLayout({
   const siteDescription = t(locale, "seo.root_description").replace(/RACKET/g, panelBrand.name);
 
   return (
-    <html lang={locale} className={`dark ${montserrat.variable}`}>
+    <html lang={locale} className={`dark ${proximaNova.variable}`}>
       <head>
         <link rel="stylesheet" href="/fontawesome/css/all.min.css" />
         <script

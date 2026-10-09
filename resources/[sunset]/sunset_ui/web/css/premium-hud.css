@@ -7,7 +7,7 @@
     --hud-danger: #ff4d4d;
     --hud-armor: #3b82f6;
     --hud-health: #10b981;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body);
 }
 
 .premium-unskew {

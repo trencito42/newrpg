@@ -39,6 +39,7 @@ export const HorizontalCardScroller = forwardRef<HTMLDivElement, HorizontalCardS
           className={cn(
             "racket-hscroll-track flex max-w-full py-1 no-scrollbar scroll-smooth",
             "max-sm:snap-x max-sm:snap-mandatory",
+            "min-w-0",
             gapClass,
             trackClassName
           )}

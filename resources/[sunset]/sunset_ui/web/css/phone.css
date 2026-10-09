@@ -379,14 +379,82 @@
 .grow { flex: 1; min-width: 0; }
 .phone-device.is-camera { inset: 0; width: 100%; height: 100%; right: 0; bottom: 0; transform: none; opacity: 1; background: transparent; }
 .phone-device.is-camera .phone-hardware { opacity: 0; pointer-events: none; }
-.phone-camera-hud { position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column; justify-content: flex-end; }
+.phone-camera-hud {
+    position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column;
+    font-family: var(--font-body, 'Proxima Nova', sans-serif);
+    user-select: none; -webkit-user-select: none;
+}
 .phone-camera-hud[hidden] { display: none; }
-.phone-camera-stage { flex: 1; }
-.phone-camera-bar { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 18px 18px 28px; transform: scale(var(--ui-scale, 1)); transform-origin: center bottom; }
-.phone-shutter { width: 68px; height: 68px; border-radius: 50%; border: 4px solid #fff; background: transparent; padding: 4px; cursor: pointer; }
-.phone-shutter::after { content: ''; display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; }
-.phone-camera-side, .phone-camera-roll { width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.45); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
-.phone-camera-hud.is-capturing .phone-camera-bar { visibility: hidden; }
+.phone-camera-top {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(14px * var(--ui-scale, 1)) calc(18px * var(--ui-scale, 1));
+    pointer-events: none;
+}
+.phone-camera-top > * { pointer-events: auto; }
+.phone-camera-icon-btn {
+    width: 40px; height: 40px; border: 0; border-radius: 50%;
+    background: rgba(0, 0, 0, 0.42); color: #fff; cursor: pointer;
+    font-size: 22px; line-height: 1; font-weight: 400;
+}
+.phone-camera-icon-btn#phone-camera-close { font-size: 26px; }
+.phone-camera-status {
+    flex: 1; text-align: center; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    pointer-events: none;
+}
+.phone-camera-stage { flex: 1; min-height: 0; cursor: default; touch-action: none; }
+.phone-camera-stage.is-aiming { cursor: crosshair; }
+.phone-camera-flash {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: #fff; opacity: 0; transition: opacity 0.08s ease-out;
+}
+.phone-camera-flash.is-flash { opacity: 0.92; transition: opacity 0.04s ease-in; }
+.phone-camera-bottom {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 0 calc(20px * var(--ui-scale, 1)) calc(22px * var(--ui-scale, 1));
+    transform: scale(var(--ui-scale, 1)); transform-origin: center bottom;
+}
+.phone-camera-lenses {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 8px; border-radius: 999px; background: rgba(0, 0, 0, 0.38);
+}
+.phone-camera-lenses.is-hidden { visibility: hidden; pointer-events: none; }
+.phone-camera-lens {
+    min-width: 36px; height: 28px; padding: 0 8px; border: 0; border-radius: 999px;
+    background: transparent; color: rgba(255, 255, 255, 0.55);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.02em; cursor: pointer;
+}
+.phone-camera-lens.is-active { background: rgba(255, 255, 255, 0.18); color: #fff; }
+.phone-camera-bar {
+    width: 100%; max-width: 280px; display: flex; align-items: center; justify-content: space-between;
+}
+.phone-camera-bar-spacer { width: 52px; height: 52px; flex-shrink: 0; }
+.phone-shutter {
+    width: 72px; height: 72px; border-radius: 50%; border: 3px solid #fff;
+    background: transparent; padding: 5px; cursor: pointer; flex-shrink: 0;
+    transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.phone-shutter:disabled { opacity: 0.45; cursor: not-allowed; transform: scale(0.96); }
+.phone-shutter::after {
+    content: ''; display: block; width: 100%; height: 100%; border-radius: 50%;
+    background: #fff; transition: transform 0.1s ease;
+}
+.phone-shutter:active:not(:disabled)::after { transform: scale(0.92); }
+.phone-camera-roll {
+    width: 52px; height: 52px; border-radius: 10px; border: 2px solid rgba(255, 255, 255, 0.35);
+    background: rgba(0, 0, 0, 0.35) center/cover no-repeat; cursor: pointer; flex-shrink: 0;
+}
+.phone-camera-roll.phone-camera-roll--pop { animation: phone-roll-pop 0.35s ease; }
+@keyframes phone-roll-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+.phone-camera-hud.is-capturing [data-camera-ui="1"] { visibility: hidden; pointer-events: none; }
+.phone-camera-hud.is-capturing .phone-camera-top { visibility: hidden; }
 .phone-photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
 .phone-photo-grid button { border: 0; padding: 0; background: #111; aspect-ratio: 1; cursor: pointer; overflow: hidden; }
 .phone-photo-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -421,7 +489,16 @@
 .feed-card                { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
 .feed-card:last-child     { border-bottom: none; }
 .feed-card-header         { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
-.feed-avatar              { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-dim, rgba(215,181,88,.18)); color: var(--accent, #d7b558); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.feed-avatar              { width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+.feed-avatar.feed-cm-avatar { width: 28px; height: 28px; border-radius: 6px; }
+.feed-avatar.feed-profile-avatar { width: 48px; height: 48px; border-radius: 10px; }
+.feed-avatar-img          { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.feed-avatar-fallback     { font-size: 11px; font-weight: 700; color: var(--accent, #d7b558); }
+.feed-identity-line       { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.feed-author-name-inline  { font-size: 13px; font-weight: 700; color: var(--text); }
+.feed-faction-pill        { font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); padding: 1px 5px; border-radius: 4px; background: rgba(255,255,255,.06); }
+.feed-clan-tag            { font-size: 10px; font-weight: 700; color: var(--accent, #d7b558); }
+.feed-action-btn:disabled { opacity: .55; cursor: wait; }
 .feed-author-wrap         { flex: 1; min-width: 0; }
 .feed-author-name         { font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer; }
 .feed-author-name:hover   { color: var(--accent, #d7b558); }
@@ -456,7 +533,6 @@
 .feed-comments-head       { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
 .feed-comment             { display: flex; gap: 8px; margin-bottom: 10px; }
 .feed-comment-reply       { margin-left: 28px; }
-.feed-cm-avatar           { width: 26px; height: 26px; border-radius: 50%; background: rgba(215,181,88,.12); color: var(--accent, #d7b558); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
 .feed-cm-body             { flex: 1; min-width: 0; }
 .feed-cm-name             { font-size: 12px; font-weight: 700; color: var(--text); }
 .feed-cm-text             { font-size: 12px; color: var(--text); line-height: 1.4; margin-top: 2px; white-space: pre-wrap; word-break: break-word; }
@@ -466,6 +542,5 @@
 .feed-cm-send             { font-size: 12px; padding: 8px 14px; white-space: nowrap; }
 /* Profile */
 .feed-profile-card        { display: flex; align-items: center; gap: 12px; padding: 12px 0 16px; border-bottom: 1px solid rgba(255,255,255,.07); margin-bottom: 12px; }
-.feed-profile-avatar      { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-dim, rgba(215,181,88,.18)); color: var(--accent, #d7b558); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
 .feed-profile-name        { font-size: 15px; font-weight: 700; color: var(--text); }
 .feed-profile-sub         { font-size: 12px; color: var(--text-muted); margin-top: 2px; }

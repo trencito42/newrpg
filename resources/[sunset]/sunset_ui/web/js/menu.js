@@ -46,6 +46,19 @@ const Menu = {
             });
         });
 
+        if (!this._vehicleWheelBound) {
+            this._vehicleWheelBound = true;
+            document.addEventListener('wheel', (e) => {
+                const menu = $('#menu');
+                if (!menu || menu.classList.contains('hidden')) return;
+                const list = e.target.closest?.('.v-list');
+                if (!list) return;
+                e.preventDefault();
+                e.stopPropagation();
+                list.scrollTop += e.deltaY;
+            }, { passive: false, capture: true });
+        }
+
         window.addEventListener('sunset:localeChanged', () => {
             this.syncLanguageButtons();
             if (this._data && !$('#menu')?.classList.contains('hidden')) this.update(this._data);
@@ -289,17 +302,70 @@ const Menu = {
         return `<div class="tune-chips-container">${badges.join('')}</div>`;
     },
 
-    vehicleSnapshotKey(vehicles, selectedId, openEcuId) {
+    vehicleListSnapshotKey(vehicles, selectedId, query) {
         const list = (vehicles || []).map((v) => [
             v.id, v.model, v.displayName, v.plate, v.stored, v.inWorld, v.destroyed,
-            v.fuel, v.engine, v.body, v.odometer,
             v.insurancePoints, v.insuranceLevel, v.claimCost, v.renewCost,
             v.ownershipDays,
             v.isCurrentVehicle, v.garage, v.parked_x, v.parked_y,
             JSON.stringify(v.mods || null),
             JSON.stringify(v.ecuInfo || null),
         ].join('|'));
-        return JSON.stringify({ selectedId, openEcuId, list });
+        return JSON.stringify({ selectedId, list, query: query || '' });
+    },
+
+    vehicleLiveSnapshotKey(selected) {
+        if (!selected) return '';
+        const fuel = Math.max(0, Math.min(100, Math.round(Number(selected.fuel) || 0)));
+        const engine = Math.max(0, Math.min(100, Math.round((Number(selected.engine) || 0) / 10)));
+        const body = Math.max(0, Math.min(100, Math.round((Number(selected.body) || 0) / 10)));
+        const odometer = Math.max(0, Math.round(Number(selected.odometer) || 0));
+        return `${fuel}|${engine}|${body}|${odometer}`;
+    },
+
+    _bindVehicleListScroll(listEl) {
+        if (!listEl || listEl.dataset.scrollBound === '1') return;
+        listEl.dataset.scrollBound = '1';
+        listEl.addEventListener('wheel', (e) => {
+            e.stopPropagation();
+        }, { passive: true });
+    },
+
+    _patchVehicleLiveStats(selected) {
+        const grid = $('#menu-vehicle-grid');
+        if (!grid || !selected) return;
+        const fuel = Math.max(0, Math.min(100, Math.round(Number(selected.fuel) || 0)));
+        const engine = Math.max(0, Math.min(100, Math.round((Number(selected.engine) || 0) / 10)));
+        const body = Math.max(0, Math.min(100, Math.round((Number(selected.body) || 0) / 10)));
+        const engineCls = engine < 30 ? 'bad' : (engine < 60 ? 'warn' : 'ok');
+        const bodyCls = body < 30 ? 'bad' : (body < 60 ? 'warn' : 'ok');
+        const fuelCls = fuel < 15 ? 'bad' : (fuel < 35 ? 'warn' : 'ok');
+
+        const setBar = (key, pct, cls) => {
+            const row = grid.querySelector(`[data-v-live="${key}"]`);
+            if (!row) return;
+            const val = row.querySelector('.vbar-val');
+            const fill = row.querySelector('.vbar-fill');
+            if (val) {
+                val.textContent = `${pct}%`;
+                val.classList.remove('ok', 'warn', 'bad');
+                val.classList.add(cls);
+            }
+            if (fill) {
+                fill.style.width = `${pct}%`;
+                fill.classList.remove('ok', 'warn', 'bad');
+                fill.classList.add(cls);
+            }
+        };
+        setBar('fuel', fuel, fuelCls);
+        setBar('engine', engine, engineCls);
+        setBar('body', body, bodyCls);
+
+        const odoEl = grid.querySelector('[data-v-live="odometer"]');
+        if (odoEl && window.I18n?.number) {
+            const odometer = Math.max(0, Number(selected.odometer) || 0);
+            odoEl.innerHTML = `${window.I18n.number(odometer, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span class="spec-unit">KM</span>`;
+        }
     },
 
     _vehicleStateOf(v) {
@@ -354,11 +420,35 @@ const Menu = {
         const vehicles = data.vehicles || [];
         const query = String(this._vehicleSearch || '').trim().toLowerCase();
 
-        const snapKey = this.vehicleSnapshotKey(vehicles, this.selectedVehicleId, this.openEcuVehicleId) + '|' + query;
-        if (snapKey === this._vehicleSnapKey && grid.classList.contains('v-menu-forza')) {
+        const filteredEarly = query
+            ? vehicles.filter((v) => {
+                const model = String(v.model || '').toLowerCase();
+                const plate = String(v.plate || '').toLowerCase();
+                return model.includes(query) || plate.includes(query);
+            })
+            : vehicles;
+        const selectedExistsEarly = filteredEarly.some((v) => String(v.id) === String(this.selectedVehicleId));
+        if (!selectedExistsEarly && vehicles.length) {
+            this.selectedVehicleId = (filteredEarly[0] || vehicles[0]).id;
+        }
+        const selectedPreview = filteredEarly.find((v) => String(v.id) === String(this.selectedVehicleId))
+            || vehicles.find((v) => String(v.id) === String(this.selectedVehicleId))
+            || vehicles[0];
+
+        const listSnap = this.vehicleListSnapshotKey(vehicles, this.selectedVehicleId, query);
+        const liveSnap = this.vehicleLiveSnapshotKey(selectedPreview);
+        if (listSnap === this._vehicleListSnapKey && grid.classList.contains('v-menu-forza')) {
+            if (liveSnap !== this._vehicleLiveSnapKey) {
+                this._vehicleLiveSnapKey = liveSnap;
+                this._patchVehicleLiveStats(selectedPreview);
+            }
             return;
         }
-        this._vehicleSnapKey = snapKey;
+        this._vehicleListSnapKey = listSnap;
+        this._vehicleLiveSnapKey = liveSnap;
+
+        const prevList = grid.querySelector('.v-list');
+        const scrollTop = prevList ? prevList.scrollTop : 0;
 
         grid.className = 'v-menu-forza visible';
 
@@ -478,21 +568,21 @@ const Menu = {
                 </div>
                 <div class="vd-body">
                     <div class="vd-bars-box">
-                        <div class="vbar-row">
+                        <div class="vbar-row" data-v-live="engine">
                             <div class="vbar-header">
                                 <span class="vbar-title"><i class="ph-bold ph-engine"></i> ${this.t('menu.vehicle.engine')}</span>
                                 <span class="vbar-val ${engineCls}">${engine}%</span>
                             </div>
                             <div class="vbar-track"><div class="vbar-fill ${engineCls}" style="width: ${engine}%"></div></div>
                         </div>
-                        <div class="vbar-row">
+                        <div class="vbar-row" data-v-live="body">
                             <div class="vbar-header">
                                 <span class="vbar-title"><i class="ph-bold ph-shield"></i> ${this.t('menu.vehicle.body')}</span>
                                 <span class="vbar-val ${bodyCls}">${body}%</span>
                             </div>
                             <div class="vbar-track"><div class="vbar-fill ${bodyCls}" style="width: ${body}%"></div></div>
                         </div>
-                        <div class="vbar-row">
+                        <div class="vbar-row" data-v-live="fuel">
                             <div class="vbar-header">
                                 <span class="vbar-title"><i class="ph-bold ph-gas-pump"></i> ${this.t('menu.vehicle.fuel')}</span>
                                 <span class="vbar-val ${fuelCls}">${fuel}%</span>
@@ -508,7 +598,7 @@ const Menu = {
                                 <span>${this.t('menu.vehicle.odometer_age')}</span>
                             </div>
                             <div class="spec-card-main">
-                                <div class="spec-odometer">${window.I18n.number(odometer, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span class="spec-unit">KM</span></div>
+                                <div class="spec-odometer" data-v-live="odometer">${window.I18n.number(odometer, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span class="spec-unit">KM</span></div>
                                 <div class="spec-sub"><i class="ph-bold ph-calendar"></i> ${ownershipDays === 0
                                     ? this.t('menu.vehicle.acquired_today')
                                     : this.t('menu.vehicle.owned_days', { days: ownershipDays })}</div>
@@ -556,10 +646,16 @@ const Menu = {
             </div>`;
 
         const searchInput = grid.querySelector('#v-menu-search');
+        const listEl = grid.querySelector('.v-list');
+        if (listEl) {
+            if (scrollTop > 0) listEl.scrollTop = scrollTop;
+            this._bindVehicleListScroll(listEl);
+        }
+
         if (searchInput) {
             searchInput.addEventListener('input', () => {
                 this._vehicleSearch = searchInput.value;
-                this._vehicleSnapKey = null;
+                this._vehicleListSnapKey = null;
                 this.renderVehicles(data);
             });
             searchInput.addEventListener('keydown', (e) => e.stopPropagation());
@@ -568,7 +664,7 @@ const Menu = {
         grid.querySelectorAll('[data-v-select]').forEach((button) => {
             button.addEventListener('click', () => {
                 this.selectedVehicleId = Number(button.dataset.vSelect);
-                this._vehicleSnapKey = null;
+                this._vehicleListSnapKey = null;
                 this.renderVehicles(data);
             });
         });
@@ -580,7 +676,7 @@ const Menu = {
                 btn.disabled = true;
                 btn.style.opacity = '0.5';
                 btn.style.pointerEvents = 'none';
-                this._vehicleSnapKey = null;
+                this._vehicleListSnapKey = null;
                 post('menuVehicleAction', {
                     action: action,
                     vehicleId: vehicleId,
@@ -826,7 +922,8 @@ const Menu = {
         menu.classList.add('hidden');
         menu.classList.remove('menu--solo-vehicle', 'menu--solo-inventory', 'menu--vehicle-active');
         this.soloMode = null;
-        this._vehicleSnapKey = null;
+        this._vehicleListSnapKey = null;
+        this._vehicleLiveSnapKey = null;
 
         const closeBtn = $('#menu-close-btn');
         if (closeBtn && this._closeHtml) closeBtn.innerHTML = this._closeHtml;

@@ -2,6 +2,39 @@ local PurchaseLocks = {}
 local TestDriveCooldown = {}
 local TestDrives = {}
 
+local function entityExists(entity)
+    if not entity or entity == 0 then return false end
+    local ok, exists = pcall(DoesEntityExist, entity)
+    return ok and exists
+end
+
+local function deleteVehicleSafe(entity)
+    if not entity or entity == 0 then return end
+    pcall(function()
+        if DoesEntityExist(entity) then DeleteEntity(entity) end
+    end)
+end
+
+local function spawnDealershipVehicle(modelName)
+    local hash = joaat(modelName)
+    local s = Sunset.Dealership.testDriveSpawn
+    local x, y, z, heading = s.x, s.y, s.z, s.w or 0.0
+    local vehicle
+    if CreateVehicleServerSetter then
+        vehicle = CreateVehicleServerSetter(hash, 'automobile', x, y, z, heading)
+    else
+        vehicle = CreateVehicle(hash, x, y, z, heading, true, true)
+    end
+    if not vehicle or vehicle == 0 then return nil end
+    local deadline = GetGameTimer() + 5000
+    while GetGameTimer() < deadline do
+        if entityExists(vehicle) then return vehicle end
+        Wait(0)
+    end
+    deleteVehicleSafe(vehicle)
+    return nil
+end
+
 local function isAdmin(source)
     return GetResourceState('sunset_admin') == 'started'
         and exports.sunset_admin:IsAdmin(source, 3)
@@ -87,14 +120,14 @@ exports.sunset_core:RegisterCallback('sunset:dealership:testDrive', function(sou
     local remaining = 90 - (now - (TestDriveCooldown[source] or 0))
     if remaining > 0 then return nil, { localeKey = 'dealership.message.next_test_drive_is_available_in_value_seconds', formatArgs = { remaining } } end
     TestDriveCooldown[source] = now
-    if TestDrives[source] and DoesEntityExist(TestDrives[source]) then DeleteEntity(TestDrives[source]) end
-    local s = Sunset.Dealership.testDriveSpawn
+    deleteVehicleSafe(TestDrives[source])
+    TestDrives[source] = nil
     -- [ANTICHEAT] whitelist test-drive spawn for the vehspawn ledger detector
     if GetResourceState('sunset_anticheat') == 'started' then
         pcall(function() exports.sunset_anticheat:MarkLegit(source, 'vehicle_spawn', 15) end)
     end
-    local vehicle = CreateVehicle(joaat(row.model), s.x, s.y, s.z, s.w or 0.0, true, true)
-    if not vehicle or vehicle == 0 then
+    local vehicle = spawnDealershipVehicle(row.model)
+    if not vehicle then
         TestDriveCooldown[source] = nil
         return nil, { localeKey = 'dealership.message.the_test_drive_vehicle_could_not_be_created_try' }
     end
@@ -103,7 +136,7 @@ exports.sunset_core:RegisterCallback('sunset:dealership:testDrive', function(sou
     local netId = NetworkGetNetworkIdFromEntity(vehicle)
     SetTimeout(((Sunset.Dealership.testDriveSeconds or 60) + 15) * 1000, function()
         if TestDrives[source] == vehicle then TestDrives[source] = nil end
-        if DoesEntityExist(vehicle) then DeleteEntity(vehicle) end
+        deleteVehicleSafe(vehicle)
     end)
     return {
         model = row.model,
@@ -135,7 +168,7 @@ exports.sunset_core:RegisterCallback('sunset:dealership:rentVehicle', function(s
     local row = MySQL.single.await([[
         SELECT model, label, price FROM dealership_vehicles
         WHERE available = 1 AND stock > 0 AND price > 0 AND price <= ?
-        ORDER BY price ASC, id ASC
+        ORDER BY price ASC, display_order ASC, model ASC
         LIMIT 1
     ]], { cap })
     if not row then return finish(nil, { localeKey = 'dealership.message.no_rental_vehicle' }) end
@@ -146,13 +179,13 @@ exports.sunset_core:RegisterCallback('sunset:dealership:rentVehicle', function(s
         return finish(nil, { localeKey = 'dealership.message.rental_payment_failed' })
     end
 
-    if TestDrives[source] and DoesEntityExist(TestDrives[source]) then DeleteEntity(TestDrives[source]) end
-    local s = Sunset.Dealership.testDriveSpawn
+    deleteVehicleSafe(TestDrives[source])
+    TestDrives[source] = nil
     if GetResourceState('sunset_anticheat') == 'started' then
         pcall(function() exports.sunset_anticheat:MarkLegit(source, 'vehicle_spawn', 15) end)
     end
-    local vehicle = CreateVehicle(joaat(row.model), s.x, s.y, s.z, s.w or 0.0, true, true)
-    if not vehicle or vehicle == 0 then
+    local vehicle = spawnDealershipVehicle(row.model)
+    if not vehicle then
         exports.sunset_core:AddMoney(source, 'cash', price, 'vehicle_rental_refund')
         exports.sunset_core:RefreshMoney(source)
         return finish(nil, { localeKey = 'dealership.message.the_test_drive_vehicle_could_not_be_created_try' })
@@ -162,7 +195,7 @@ exports.sunset_core:RegisterCallback('sunset:dealership:rentVehicle', function(s
     local netId = NetworkGetNetworkIdFromEntity(vehicle)
     SetTimeout(((Sunset.Dealership.rentalSeconds or 600) + 15) * 1000, function()
         if TestDrives[source] == vehicle then TestDrives[source] = nil end
-        if DoesEntityExist(vehicle) then DeleteEntity(vehicle) end
+        deleteVehicleSafe(vehicle)
     end)
     -- Once per successful handoff. AddProgress ignores the event when the quest is not active.
     TriggerEvent('sunset:quest:progress', char.id, 'vehicle_rented', 1, { model = row.model })
@@ -182,7 +215,7 @@ RegisterNetEvent('sunset:dealership:endTestDrive', function(netId)
     if not vehicle then return end
     if tonumber(netId) and NetworkGetNetworkIdFromEntity(vehicle) ~= tonumber(netId) then return end
     TestDrives[source] = nil
-    if DoesEntityExist(vehicle) then DeleteEntity(vehicle) end
+    deleteVehicleSafe(vehicle)
 end)
 
 exports.sunset_core:RegisterCallback('sunset:dealership:purchase', function(source, model, color)
@@ -340,7 +373,7 @@ AddEventHandler('playerDropped', function()
     TestDriveCooldown[source] = nil
     local vehicle = TestDrives[source]
     TestDrives[source] = nil
-    if vehicle and DoesEntityExist(vehicle) then DeleteEntity(vehicle) end
+    deleteVehicleSafe(vehicle)
 end)
 
 

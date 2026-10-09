@@ -134,7 +134,9 @@
     "comments_label": "comentarii",
     "likes_and_comments": "{likes} aprecieri · {comments} comentarii",
     "latest_activity": "Activitate recentă",
-    "latest_forum_discussions": "Discuții recente pe forum"
+    "latest_forum_discussions": "Discuții recente pe forum",
+    "for_you_feed": "Pentru tine pe RACKET",
+    "shared_photo": "A distribuit o poză"
   },
   "forumUi": {
     "title": "Forum comunitate",

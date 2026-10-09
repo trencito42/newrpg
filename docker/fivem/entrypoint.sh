@@ -3,17 +3,62 @@ set -e
 
 MYSQL_HOST_VAL="${MARIADB_HOST:-mariadb}"
 MYSQL_DB_VAL="${MARIADB_DATABASE:-sunsetmp}"
-MYSQL_CONN="mysql://${MARIADB_USER:-sunset}:${MARIADB_PASSWORD}@${MYSQL_HOST_VAL}:3306/${MYSQL_DB_VAL}?charset=utf8mb4"
+MYSQL_USER_VAL="${MARIADB_USER:-sunset}"
+MYSQL_CONN="mysql://${MYSQL_USER_VAL}:${MARIADB_PASSWORD}@${MYSQL_HOST_VAL}:3306/${MYSQL_DB_VAL}?charset=utf8mb4"
+
+mariadb_query() {
+  MYSQL_PWD="${MARIADB_PASSWORD}" mariadb \
+    --host="${MYSQL_HOST_VAL}" \
+    --user="${MYSQL_USER_VAL}" \
+    --database="${MYSQL_DB_VAL}" \
+    -N -B "$@"
+}
+
+mariadb_import() {
+  MYSQL_PWD="${MARIADB_PASSWORD}" mariadb \
+    --host="${MYSQL_HOST_VAL}" \
+    --user="${MYSQL_USER_VAL}" \
+    --database="${MYSQL_DB_VAL}"
+}
+
+mariadb_query -e "CREATE TABLE IF NOT EXISTS schema_migrations (
+  name VARCHAR(191) PRIMARY KEY,
+  checksum CHAR(64) NOT NULL,
+  applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB"
+
+# Match scripts/apply-migrations.sh: baseline legacy DBs that predate the registry.
+applied_count="$(mariadb_query -e "SELECT COUNT(*) FROM schema_migrations" | tr -d '\r')"
+characters_exists="$(mariadb_query -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='characters'" | tr -d '\r')"
+if [ "${applied_count}" = "0" ] && [ "${characters_exists}" = "1" ]; then
+  for migration in /migrations/[0-9][0-9]-*.sql; do
+    [ -f "${migration}" ] || continue
+    base="$(basename "${migration}")"
+    [ "${base}" = "01-sunset.sql" ] && continue
+    prefix="${base%%-*}"
+    [ "${prefix}" -le 35 ] || continue
+    checksum="$(sha256sum "${migration}" | awk '{print $1}')"
+    mariadb_query -e "INSERT IGNORE INTO schema_migrations (name, checksum) VALUES ('${base}', '${checksum}')"
+  done
+fi
 
 for migration in /migrations/[0-9][0-9]-*.sql; do
   [ -f "${migration}" ] || continue
-  [ "$(basename "${migration}")" = "01-sunset.sql" ] && continue
-  echo "[sunsetmp] applying $(basename "${migration}")"
-  MYSQL_PWD="${MARIADB_PASSWORD}" mariadb \
-    --host="${MYSQL_HOST_VAL}" \
-    --user="${MARIADB_USER:-sunset}" \
-    --database="${MYSQL_DB_VAL}" \
-    < "${migration}" || true
+  base="$(basename "${migration}")"
+  [ "${base}" = "01-sunset.sql" ] && continue
+  checksum="$(sha256sum "${migration}" | awk '{print $1}')"
+  applied="$(mariadb_query -e "SELECT checksum FROM schema_migrations WHERE name='${base}' LIMIT 1" | tr -d '\r')"
+  if [ -n "${applied}" ]; then
+    if [ "${applied}" != "${checksum}" ]; then
+      echo "[sunsetmp] ERROR: applied migration ${base} was edited (checksum mismatch)" >&2
+      exit 1
+    fi
+    echo "[sunsetmp] migration ${base} already applied"
+    continue
+  fi
+  echo "[sunsetmp] applying ${base}"
+  sed '/^[[:space:]]*USE[[:space:]]*`[^`]*`[[:space:]]*;[[:space:]]*$/d' "${migration}" | mariadb_import
+  mariadb_query -e "INSERT INTO schema_migrations (name, checksum) VALUES ('${base}', '${checksum}')"
 done
 echo "[sunsetmp] database migrations complete"
 

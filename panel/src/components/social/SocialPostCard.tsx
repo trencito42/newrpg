@@ -76,9 +76,13 @@ export function SocialPostCard({
 
   const compact = variant === "compact" || variant === "profile" || variant === "home";
   const mediaMaxH =
-    variant === "compact" || variant === "home" || variant === "profile"
+    variant === "compact" || variant === "profile"
       ? "max-h-[220px]"
       : "max-h-[400px]";
+  const mediaClass =
+    variant === "home"
+      ? "w-full max-w-full h-auto max-h-[400px] object-contain rounded-lg mb-2 sm:mb-3 cursor-pointer block bg-[rgba(0,0,0,0.15)]"
+      : `w-full ${mediaMaxH} object-cover rounded-lg mb-2 sm:mb-3 cursor-pointer`;
 
   const wrapperClass =
     variant === "profile" || variant === "home"
@@ -133,12 +137,23 @@ export function SocialPostCard({
 
       {post.media_url && (
         <>
-          <img
-            src={post.thumbnail_url ?? post.media_url}
-            alt=""
-            onClick={() => setImageFull(true)}
-            className={`w-full ${mediaMaxH} object-cover rounded-lg mb-2 sm:mb-3 cursor-pointer`}
-          />
+          {variant === "home" ? (
+            <div className="w-full min-w-0 overflow-hidden">
+              <img
+                src={post.thumbnail_url ?? post.media_url}
+                alt=""
+                onClick={() => setImageFull(true)}
+                className={mediaClass}
+              />
+            </div>
+          ) : (
+            <img
+              src={post.thumbnail_url ?? post.media_url}
+              alt=""
+              onClick={() => setImageFull(true)}
+              className={mediaClass}
+            />
+          )}
           {imageFull && (
             <div
               className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"

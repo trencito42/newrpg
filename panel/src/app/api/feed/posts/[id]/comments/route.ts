@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
-import { dbQuery, dbQuerySingle, dbExecute } from "@/lib/db";
+import { dbQuerySingle, dbExecute } from "@/lib/db";
+import { fetchSocialComments } from "@/lib/social-feed";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 
@@ -14,26 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const beforeId = req.nextUrl.searchParams.get("before_id") ? parseInt(req.nextUrl.searchParams.get("before_id")!) : null;
   const limit = 30;
 
-  const extraWhere = beforeId ? " AND c.id < ?" : "";
-  const queryParams: any[] = [postId];
-  if (beforeId) queryParams.push(beforeId);
-  queryParams.push(limit);
-
-  interface CommentRow extends RowDataPacket {
-    id: number; post_id: number; character_id: number; firstname: string; lastname: string;
-    parent_comment_id: number | null; body: string; created_at: string; updated_at: string | null;
-  }
-
-  const comments = await dbQuery<CommentRow>(
-    `SELECT c.id, c.post_id, c.character_id, ch.firstname, ch.lastname,
-            c.parent_comment_id, c.body, c.created_at, c.updated_at
-     FROM social_comments c
-     JOIN characters ch ON ch.id = c.character_id
-     WHERE c.post_id = ? AND c.deleted_at IS NULL${extraWhere}
-     ORDER BY c.id ASC
-     LIMIT ?`,
-    queryParams
-  );
+  const comments = await fetchSocialComments(postId, beforeId, limit);
 
   const nextCursor = comments.length === limit ? comments[comments.length - 1].id : null;
   return NextResponse.json({ comments, nextCursor });

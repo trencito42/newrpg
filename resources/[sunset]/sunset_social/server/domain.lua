@@ -47,41 +47,18 @@ function Social.GetComment(commentId)
     )
 end
 
--- Build enriched feed rows with likes/comments counts and liked-by-viewer.
--- viewerCharId may be nil (unauthenticated).
--- Returns array of post tables.
-function Social.FetchFeed(opts)
-    -- opts: { characterIds (array|nil), beforeId (int|nil), limit (int), viewerCharId (int|nil) }
-    local limit     = math.min(tonumber(opts.limit) or 20, 50)
-    local beforeId  = tonumber(opts.beforeId)
-    local viewerCharId = tonumber(opts.viewerCharId)
-
-    local where = 'p.deleted_at IS NULL'
-    local params = {}
-
-    if opts.characterIds and #opts.characterIds > 0 then
-        local placeholders = {}
-        for _, id in ipairs(opts.characterIds) do
-            placeholders[#placeholders + 1] = '?'
-            params[#params + 1] = id
-        end
-        where = where .. ' AND p.character_id IN (' .. table.concat(placeholders, ',') .. ')'
-    end
-
-    if beforeId then
-        where = where .. ' AND p.id < ?'
-        params[#params + 1] = beforeId
-    end
-
-    params[#params + 1] = viewerCharId or 0
-    params[#params + 1] = limit
-
-    local rows = MySQL.query.await(string.format([[
+-- Shared SELECT for feed rows (viewer placeholder MUST be bound first — see FetchFeed).
+Social.FEED_SELECT = [[
         SELECT
             p.id,
             p.character_id,
             c.firstname,
             c.lastname,
+            JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) AS faction_id,
+            JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.skin')) AS author_skin,
+            cl.tag AS clan_tag,
+            cl.tag_color AS clan_color,
+            cl.tag_style AS clan_tag_style,
             p.body,
             p.media_id,
             pm.url AS media_url,
@@ -96,6 +73,8 @@ function Social.FetchFeed(opts)
         FROM social_posts p
         JOIN characters c ON c.id = p.character_id
         LEFT JOIN phone_media pm ON pm.id = p.media_id AND pm.deleted_at IS NULL
+        LEFT JOIN clan_members clanm ON clanm.character_id = c.id
+        LEFT JOIN clans cl ON cl.id = clanm.clan_id
         LEFT JOIN (
             SELECT post_id, COUNT(*) AS likes_count FROM social_post_likes GROUP BY post_id
         ) lk ON lk.post_id = p.id
@@ -103,17 +82,73 @@ function Social.FetchFeed(opts)
             SELECT post_id, COUNT(*) AS comments_count FROM social_comments WHERE deleted_at IS NULL GROUP BY post_id
         ) cm ON cm.post_id = p.id
         LEFT JOIN social_post_likes vl ON vl.post_id = p.id AND vl.character_id = ?
+]]
+
+Social.COMMENT_SELECT = [[
+        SELECT c.id, c.post_id, c.character_id, ch.firstname, ch.lastname,
+               JSON_UNQUOTE(JSON_EXTRACT(ch.metadata, '$.faction')) AS faction_id,
+               JSON_UNQUOTE(JSON_EXTRACT(ch.metadata, '$.skin')) AS author_skin,
+               cl.tag AS clan_tag, cl.tag_color AS clan_color, cl.tag_style AS clan_tag_style,
+               c.parent_comment_id, c.body, c.created_at, c.updated_at
+        FROM social_comments c
+        JOIN characters ch ON ch.id = c.character_id
+        LEFT JOIN clan_members clanm ON clanm.character_id = ch.id
+        LEFT JOIN clans cl ON cl.id = clanm.clan_id
+]]
+
+-- Build enriched feed rows with likes/comments counts and liked-by-viewer.
+-- viewerCharId may be nil (unauthenticated).
+-- SQL param order: viewerCharId, [characterIds...], [beforeId], limit
+function Social.FetchFeed(opts)
+    local limit     = math.min(tonumber(opts.limit) or 20, 50)
+    local beforeId  = tonumber(opts.beforeId)
+    local viewerCharId = tonumber(opts.viewerCharId)
+
+    local params = { viewerCharId or 0 }
+    local where = { 'p.deleted_at IS NULL' }
+
+    if opts.characterIds and #opts.characterIds > 0 then
+        local placeholders = {}
+        for _, id in ipairs(opts.characterIds) do
+            placeholders[#placeholders + 1] = '?'
+            params[#params + 1] = id
+        end
+        where[#where + 1] = 'p.character_id IN (' .. table.concat(placeholders, ',') .. ')'
+    end
+
+    if beforeId then
+        where[#where + 1] = 'p.id < ?'
+        params[#params + 1] = beforeId
+    end
+
+    params[#params + 1] = limit
+
+    local rows = MySQL.query.await(string.format([[
+        %s
         WHERE %s
         ORDER BY p.id DESC
         LIMIT ?
-    ]], where), params)
+    ]], Social.FEED_SELECT, table.concat(where, ' AND ')), params)
 
     return rows or {}
 end
 
--- Fetch comments for a post (paginated).
+function Social.FetchPostById(viewerCharId, postId)
+    postId = tonumber(postId)
+    if not postId then return nil end
+    local params = { tonumber(viewerCharId) or 0, postId }
+    local rows = MySQL.query.await(string.format([[
+        %s
+        WHERE p.id = ? AND p.deleted_at IS NULL
+        LIMIT 1
+    ]], Social.FEED_SELECT), params)
+    return rows and rows[1] or nil
+end
+
+-- Fetch comments for a post (paginated, ascending id).
 function Social.FetchComments(postId, beforeId, limit)
     limit = math.min(tonumber(limit) or 30, 100)
+    postId = tonumber(postId)
     local extraWhere = ''
     local params = { postId }
     if beforeId then
@@ -123,15 +158,32 @@ function Social.FetchComments(postId, beforeId, limit)
     params[#params + 1] = limit
 
     local rows = MySQL.query.await(string.format([[
-        SELECT c.id, c.post_id, c.character_id, ch.firstname, ch.lastname,
-               c.parent_comment_id, c.body, c.created_at, c.updated_at
-        FROM social_comments c
-        JOIN characters ch ON ch.id = c.character_id
+        %s
         WHERE c.post_id = ? AND c.deleted_at IS NULL%s
         ORDER BY c.id ASC
         LIMIT ?
-    ]], extraWhere), params)
+    ]], Social.COMMENT_SELECT, extraWhere), params)
     return rows or {}
+end
+
+function Social.EnrichCommentAuthor(comment, characterId)
+    if type(comment) ~= 'table' or not characterId then return comment end
+    local row = MySQL.single.await([[
+        SELECT c.firstname, c.lastname,
+               JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) AS faction_id,
+               JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.skin')) AS author_skin,
+               cl.tag AS clan_tag, cl.tag_color AS clan_color, cl.tag_style AS clan_tag_style
+        FROM characters c
+        LEFT JOIN clan_members clanm ON clanm.character_id = c.id
+        LEFT JOIN clans cl ON cl.id = clanm.clan_id
+        WHERE c.id = ?
+        LIMIT 1
+    ]], { characterId })
+    if not row then return comment end
+    for k, v in pairs(row) do
+        comment[k] = v
+    end
+    return comment
 end
 
 -- Create notification (non-fatal: ignore errors).

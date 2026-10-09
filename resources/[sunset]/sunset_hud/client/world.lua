@@ -98,11 +98,48 @@ local function isPlayerPed(ped)
     return false
 end
 
+--- GTA ambient / map-streamed cars (not sunset script vehicles).
+local function shouldDeleteAmbientVehicle(veh, playerCoords, maxDist)
+    if not DoesEntityExist(veh) or isProtectedVehicle(veh) then return false end
+    local vCoords = GetEntityCoords(veh)
+    if #(vCoords - playerCoords) > maxDist then return false end
+    local driver = GetPedInVehicleSeat(veh, -1)
+    if driver ~= 0 and isPlayerPed(driver) then return false end
+    local populationType = GetEntityPopulationType(veh)
+    if populationType >= 1 and populationType <= 5 then return true end
+    -- Ymap parked props often stream as local, non-networked empties (pop type 0).
+    if populationType == 0 and driver == 0 and not NetworkGetEntityIsNetworked(veh) then
+        return true
+    end
+    return false
+end
+
+local function purgeAmbientVehiclesNear(playerCoords, maxDist)
+    for _, veh in ipairs(GetGamePool('CVehicle')) do
+        if shouldDeleteAmbientVehicle(veh, playerCoords, maxDist) then
+            SetEntityAsMissionEntity(veh, true, true)
+            DeleteVehicle(veh)
+        end
+    end
+end
+
+local function clearVehicleGeneratorsNear(coords)
+    SetVehicleGeneratorAreaOfInterest(coords.x, coords.y, coords.z, 1.0)
+    RemoveVehiclesFromGeneratorsInArea(
+        coords.x - 500.0, coords.y - 500.0, coords.z - 100.0,
+        coords.x + 500.0, coords.y + 500.0, coords.z + 100.0,
+        0
+    )
+end
+
 CreateThread(function()
     SetMaxWantedLevel(0)
     SetPedPopulationBudget(0)
     SetVehiclePopulationBudget(0)
     SetRandomEventFlag(false)
+    if SetAllVehicleGeneratorsActive then
+        SetAllVehicleGeneratorsActive(false)
+    end
 
     local playerId = PlayerId()
     local nextPersistent = 0
@@ -132,6 +169,21 @@ CreateThread(function()
             if GetPlayerWantedLevel(playerId) > 0 then
                 ClearPlayerWantedLevel(playerId)
             end
+            if SetAllVehicleGeneratorsActive then
+                SetAllVehicleGeneratorsActive(false)
+            end
+        end
+
+        local ped = PlayerPedId()
+        local coords = GetEntityCoords(ped)
+        clearVehicleGeneratorsNear(coords)
+        -- At speed, ymap parked cars can stream in and collide before the slow
+        -- cleanup tick; purge a tight bubble every frame while driving.
+        if IsPedInAnyVehicle(ped, false) then
+            local speed = GetEntitySpeed(GetVehiclePedIsIn(ped, false))
+            if speed > 8.0 then
+                purgeAmbientVehiclesNear(coords, 110.0)
+            end
         end
 
         Wait(0)
@@ -143,24 +195,8 @@ CreateThread(function()
         local ped = PlayerPedId()
         local coords = GetEntityCoords(ped)
 
-        SetVehicleGeneratorAreaOfInterest(coords.x, coords.y, coords.z, 1.0)
-        RemoveVehiclesFromGeneratorsInArea(coords.x - 500.0, coords.y - 500.0, coords.z - 100.0, coords.x + 500.0, coords.y + 500.0, coords.z + 100.0, 0)
-
-        for _, veh in ipairs(GetGamePool('CVehicle')) do
-            if DoesEntityExist(veh) and not isProtectedVehicle(veh) then
-                -- Only remove GTA ambient population. Script/network/mission
-                -- vehicles (population type 0 or >= 6) belong to gameplay.
-                local populationType = GetEntityPopulationType(veh)
-                local driver = GetPedInVehicleSeat(veh, -1)
-                if populationType >= 1 and populationType <= 5 and (driver == 0 or not isPlayerPed(driver)) then
-                    local vCoords = GetEntityCoords(veh)
-                    if #(vCoords - coords) < 350.0 then
-                        SetEntityAsMissionEntity(veh, true, true)
-                        DeleteVehicle(veh)
-                    end
-                end
-            end
-        end
+        clearVehicleGeneratorsNear(coords)
+        purgeAmbientVehiclesNear(coords, 350.0)
 
         for _, npc in ipairs(GetGamePool('CPed')) do
             if DoesEntityExist(npc) and not isPlayerPed(npc) and npc ~= ped then
@@ -173,7 +209,7 @@ CreateThread(function()
             end
         end
 
-        Wait(2500)
+        Wait(800)
     end
 end)
 

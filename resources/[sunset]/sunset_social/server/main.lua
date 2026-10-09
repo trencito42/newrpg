@@ -64,29 +64,7 @@ exports.sunset_core:RegisterCallback('social:getPost', function(source, postId)
     postId = tonumber(postId)
     if not postId then return nil, { code = 'invalid_params' } end
 
-    local posts = Social.FetchFeed({
-        -- single post: fake beforeId trick not suitable; do targeted query
-        viewerCharId = char.id,
-    })
-    -- Use targeted query
-    local rows = MySQL.query.await([[
-        SELECT p.id, p.character_id, c.firstname, c.lastname,
-               p.body, p.media_id, pm.url AS media_url, pm.thumbnail_url, pm.width, pm.height,
-               p.created_at, p.updated_at,
-               COALESCE(lk.likes_count, 0) AS likes_count,
-               COALESCE(cm.comments_count, 0) AS comments_count,
-               CASE WHEN vl.post_id IS NOT NULL THEN 1 ELSE 0 END AS liked_by_viewer
-        FROM social_posts p
-        JOIN characters c ON c.id = p.character_id
-        LEFT JOIN phone_media pm ON pm.id = p.media_id AND pm.deleted_at IS NULL
-        LEFT JOIN (SELECT post_id, COUNT(*) AS likes_count FROM social_post_likes GROUP BY post_id) lk ON lk.post_id = p.id
-        LEFT JOIN (SELECT post_id, COUNT(*) AS comments_count FROM social_comments WHERE deleted_at IS NULL GROUP BY post_id) cm ON cm.post_id = p.id
-        LEFT JOIN social_post_likes vl ON vl.post_id = p.id AND vl.character_id = ?
-        WHERE p.id = ? AND p.deleted_at IS NULL
-        LIMIT 1
-    ]], { char.id, postId })
-
-    local post = rows and rows[1]
+    local post = Social.FetchPostById(char.id, postId)
     if not post then return nil, { code = 'not_found' } end
 
     local comments = Social.FetchComments(postId, nil, 30)
@@ -245,20 +223,22 @@ exports.sunset_core:RegisterCallback('social:addComment', function(source, postI
 
     TriggerClientEvent('social:postEngagement', -1, { postId = postId, commentsCount = commentsCount })
 
+    local comment = Social.EnrichCommentAuthor({
+        id = commentId,
+        post_id = postId,
+        character_id = char.id,
+        firstname = char.firstname,
+        lastname = char.lastname,
+        parent_comment_id = parentCommentId,
+        body = cleanBody,
+        created_at = os.date('%Y-%m-%d %H:%M:%S'),
+    }, char.id)
+
     return {
         ok = true,
         commentId = commentId,
         commentsCount = commentsCount,
-        comment = {
-            id = commentId,
-            post_id = postId,
-            character_id = char.id,
-            firstname = char.firstname,
-            lastname = char.lastname,
-            parent_comment_id = parentCommentId,
-            body = cleanBody,
-            created_at = os.date('%Y-%m-%d %H:%M:%S'),
-        },
+        comment = comment,
     }
 end)
 
@@ -346,10 +326,17 @@ exports.sunset_core:RegisterCallback('social:getProfile', function(source, targe
     targetCharId = tonumber(targetCharId)
     if not targetCharId then return nil, { code = 'invalid_params' } end
 
-    local profile = MySQL.single.await(
-        'SELECT id, firstname, lastname FROM characters WHERE id = ? LIMIT 1',
-        { targetCharId }
-    )
+    local profile = MySQL.single.await([[
+        SELECT c.id, c.firstname, c.lastname,
+               JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.faction')) AS faction_id,
+               JSON_UNQUOTE(JSON_EXTRACT(c.metadata, '$.skin')) AS author_skin,
+               cl.tag AS clan_tag, cl.tag_color AS clan_color, cl.tag_style AS clan_tag_style
+        FROM characters c
+        LEFT JOIN clan_members clanm ON clanm.character_id = c.id
+        LEFT JOIN clans cl ON cl.id = clanm.clan_id
+        WHERE c.id = ?
+        LIMIT 1
+    ]], { targetCharId })
     if not profile then return nil, { code = 'not_found' } end
 
     local countRow = MySQL.single.await(
@@ -369,6 +356,11 @@ exports.sunset_core:RegisterCallback('social:getProfile', function(source, targe
             characterId = profile.id,
             name        = (profile.firstname or '') .. ' ' .. (profile.lastname or ''),
             postCount   = postCount,
+            faction_id  = profile.faction_id,
+            author_skin = profile.author_skin,
+            clan_tag    = profile.clan_tag,
+            clan_color  = profile.clan_color,
+            clan_tag_style = profile.clan_tag_style,
         },
         posts = posts,
     }

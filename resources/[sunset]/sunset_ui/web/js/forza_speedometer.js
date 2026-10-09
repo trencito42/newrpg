@@ -9,6 +9,7 @@
     const END_ANGLE = 2.20 * Math.PI;
     const ARC_RANGE = END_ANGLE - START_ANGLE;
     const MAX_SPEED = 320;
+    const FONT = "'Proxima Nova', sans-serif";
 
     const theme = {
         darkRing: 'rgba(255, 255, 255, 0.05)',
@@ -82,7 +83,7 @@
         if (isActive) drawRoundedRect(left, top, width, 2, 1, activeColor);
 
         ctx.fillStyle = isActive ? theme.white : theme.muted;
-        ctx.font = "bold 10px Montserrat, 'Chakra Petch', sans-serif";
+        ctx.font = `bold 10px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(label, x, y + 1);
@@ -156,7 +157,7 @@
             ctx.shadowBlur = 0;
         }
 
-        ctx.font = "italic 900 78px Montserrat, 'Chakra Petch', sans-serif";
+        ctx.font = `italic 700 78px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
         const speedStr = Math.min(displaySpeed, 999).toString().padStart(3, '0');
@@ -171,7 +172,7 @@
         }
 
         ctx.fillStyle = theme.muted;
-        ctx.font = "italic 700 14px Montserrat, 'Chakra Petch', sans-serif";
+        ctx.font = `italic 700 14px ${FONT}`;
         ctx.fillText('KM/H', CX, CY + 35);
 
         drawDashboardIcon(CX - 50, CY - 85, I18n.t('ui.speedo.engine_short'), state.engineOn, theme.success);
@@ -183,7 +184,7 @@
         const fuelX = CX - 95;
         const barY = CY + 80;
         ctx.fillStyle = theme.muted;
-        ctx.font = "bold 10px Montserrat, 'Chakra Petch', sans-serif";
+        ctx.font = `bold 10px ${FONT}`;
         ctx.textAlign = 'left';
         ctx.fillText(I18n.t('ui.speedo.fuel_short'), fuelX, barY - 6);
         drawRoundedRect(fuelX, barY, barWidth, barHeight, 2, 'rgba(255,255,255,0.1)');
@@ -199,7 +200,7 @@
             state.currentHealth < 35 ? theme.redline : theme.success);
 
         ctx.fillStyle = theme.muted;
-        ctx.font = "bold 11px Montserrat, 'Chakra Petch', sans-serif";
+        ctx.font = `bold 11px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.fillText(`${I18n.t('ui.speedo.odo_short')}  ${state.odo.toFixed(1).padStart(7, '0')}`, CX, CY + 125);
 
@@ -209,7 +210,7 @@
             const nosX = CX - nosBarWidth / 2;
             const nosY = CY + 102;
             ctx.fillStyle = state.nosActive ? '#00e5ff' : theme.muted;
-            ctx.font = "bold 9px Montserrat, 'Chakra Petch', sans-serif";
+            ctx.font = `bold 9px ${FONT}`;
             ctx.textAlign = 'center';
             ctx.fillText(state.nosActive ? I18n.t('ui.speedo.nos_active') : 'N2O', CX, nosY - 4);
             drawRoundedRect(nosX, nosY, nosBarWidth, nosBarHeight, 2, 'rgba(255,255,255,0.1)');

@@ -266,7 +266,10 @@
 
         onActionResult(payload) {
             payload = payload || {};
-            if (payload.op === 'camera' && !payload.ok) this.toast(payload.error || t('phone.ui.photo_upload_failed'), 'bad');
+            if (payload.op === 'camera' && !payload.ok) {
+                this.toast(payload.error || t('phone.ui.photo_upload_failed'), 'bad');
+                if ($('phone-device')?.classList.contains('is-camera')) this._setCameraCaptureState('error');
+            }
             if (payload.op === 'send') {
                 this.busy.send = false;
                 const pending = this._pendingBubble;
@@ -330,25 +333,48 @@
             }
             if (payload.op === 'feedLike') {
                 const postId = String(payload.postId);
+                const pending = this._feedLikePending && this._feedLikePending[postId];
+                if (pending && payload.seq !== undefined && payload.seq !== pending.seq) return;
                 if (!this._feedLikes) this._feedLikes = {};
-                this._feedLikes[postId] = {
-                    likesCount: payload.ok ? (payload.likesCount ?? 0) : (this._feedLikes[postId]?.likesCount ?? 0),
-                    likedByViewer: payload.ok ? !!payload.likedByViewer : (this._feedLikes[postId]?.likedByViewer ?? false),
-                };
-                document.querySelectorAll('[data-feed-like="' + postId + '"]').forEach((btn) => {
-                    btn.classList.toggle('feed-liked', this._feedLikes[postId].likedByViewer);
-                    const countEl = btn.querySelector('.feed-like-count');
-                    if (countEl) countEl.textContent = this._feedLikes[postId].likesCount;
-                });
+                if (payload.ok) {
+                    this._feedLikes[postId] = {
+                        likesCount: Math.max(0, Number(payload.likesCount) || 0),
+                        likedByViewer: !!payload.likedByViewer,
+                    };
+                } else if (pending && pending.prevState) {
+                    this._feedLikes[postId] = pending.prevState;
+                    this.toast(t('phone.ui.action_failed'), 'bad');
+                }
+                if (pending) delete this._feedLikePending[postId];
+                this._paintFeedLikeCounts();
             }
             if (payload.op === 'feedComment') {
-                if (payload.ok && payload.comment && this.current() === 'feed-post') {
+                if (this._feedCommentPendingClear) {
+                    this._feedCommentDraftCleared = !!payload.ok;
+                    this._feedCommentPendingClear();
+                    this._feedCommentPendingClear = null;
+                }
+                if (!payload.ok) {
+                    this.toast(payload.error || t('phone.ui.action_failed'), 'bad');
+                    return;
+                }
+                if (payload.comment && this.current() === 'feed-post') {
                     this._appendFeedComment(payload.comment);
                 }
-                if (payload.ok && payload.commentsCount !== undefined) {
-                    document.querySelectorAll('[data-feed-cmcount="' + payload.postId + '"]').forEach((el) => {
-                        el.textContent = payload.commentsCount;
+                if (payload.commentsCount !== undefined) {
+                    const pid = String(payload.postId);
+                    document.querySelectorAll('[data-feed-cmcount="' + pid + '"]').forEach((el) => {
+                        el.textContent = String(payload.commentsCount);
                     });
+                    const tab = this._feedTab || 'contacts';
+                    const posts = (this.apps.feed && this.apps.feed[tab] && this.apps.feed[tab].posts) || [];
+                    posts.forEach((p) => {
+                        if (String(p.id) === pid) p.comments_count = payload.commentsCount;
+                    });
+                    const detail = this.apps['feed-post'];
+                    if (detail && detail.post && String(detail.post.id) === pid) {
+                        detail.post.comments_count = payload.commentsCount;
+                    }
                 }
             }
             if (payload.op === 'feedDeletePost') {
@@ -401,15 +427,32 @@
             if (payload.app === 'clan' && view === 'clan') this.renderClan();
             if (payload.app === 'taxi' && view === 'taxi') { this.taxi = payload.data || this.taxi; this.renderTaxi(); }
             if (payload.app === 'feed') {
+                if (payload.data && payload.data.refresh) {
+                    if (payload.token !== this.token) return;
+                    if (payload.data.refreshSeq && payload.data.refreshSeq < (this._feedRefreshSeq || 0)) return;
+                    const scroll = document.querySelector('.feed-scroll');
+                    const scrollTop = scroll ? scroll.scrollTop : 0;
+                    this._mergeFeedRefresh(payload.data);
+                    if (view === 'feed') {
+                        this._patchFeedScroll();
+                        if (scroll) scroll.scrollTop = scrollTop;
+                    }
+                    return;
+                }
                 if (payload.data && payload.data.append) {
                     const prev = this.apps.feed || {};
                     const tab = payload.data.tab || 'global';
                     prev[tab] = prev[tab] || { posts: [] };
+                    (payload.data.posts || []).forEach((p) => this._syncLikeStateFromPost(p, true));
                     prev[tab].posts = (prev[tab].posts || []).concat(payload.data.posts || []);
                     prev[tab].nextCursor = payload.data.nextCursor;
                     this.apps.feed = prev;
                 } else {
-                    this.apps.feed = payload.data || {};
+                    const incoming = payload.data || {};
+                    ['global', 'contacts'].forEach((tab) => {
+                        (incoming[tab] && incoming[tab].posts || []).forEach((p) => this._syncLikeStateFromPost(p, true));
+                    });
+                    this.apps.feed = incoming;
                 }
                 if (view === 'feed') this.renderFeed();
                 return;
@@ -532,6 +575,9 @@
             this._sharePick = false;
             this._cameraReturn = null;
             this._lastPhoto = null;
+            this._feedLikes = {};
+            this._feedLikePending = {};
+            this._stopFeedPoll();
             const device = $('phone-device');
             if (device) device.classList.remove('is-camera');
             const hud = $('phone-camera-hud');
@@ -559,7 +605,15 @@
 
         current() { return this.stack[this.stack.length - 1] || 'home'; },
 
+        _stopFeedPoll() {
+            if (this._feedPollTimer) {
+                clearTimeout(this._feedPollTimer);
+                this._feedPollTimer = null;
+            }
+        },
+
         showView(id, push) {
+            if (id !== 'feed') this._stopFeedPoll();
             if (push !== false && this.current() !== id) this.stack.push(id);
             if (push === false) {
                 const idx = this.stack.lastIndexOf(id);
@@ -2302,6 +2356,115 @@
 
         // ===================== SOCIAL FEED =====================
 
+        _pedAvatarUrl(skin) {
+            const raw = String(skin || '').trim().toLowerCase();
+            const model = raw && raw !== 'default' && raw !== 'reset' && /^[a-z0-9_]+$/.test(raw)
+                ? raw
+                : 'ig_bankman';
+            return 'https://docs-backend.fivem.net/peds/' + model + '.webp';
+        },
+
+        _buildPedAvatar(person, extraClass) {
+            const wrap = el('div', 'feed-avatar' + (extraClass ? ' ' + extraClass : ''));
+            const img = document.createElement('img');
+            img.className = 'feed-avatar-img';
+            img.alt = '';
+            img.src = this._pedAvatarUrl(person.author_skin);
+            const fb = el('span', 'feed-avatar-fallback');
+            fb.append(text(((person.firstname || '?')[0] + (person.lastname || '?')[0]).toUpperCase()));
+            fb.hidden = true;
+            img.addEventListener('error', () => {
+                img.hidden = true;
+                fb.hidden = false;
+            });
+            wrap.append(img, fb);
+            return wrap;
+        },
+
+        _appendIdentityLine(parent, person) {
+            const line = el('div', 'feed-identity-line');
+            const name = el('span', 'feed-author-name-inline');
+            name.append(text((person.firstname || '') + ' ' + (person.lastname || '')));
+            line.append(name);
+            if (person.faction_id) {
+                const fac = el('span', 'feed-faction-pill');
+                fac.append(text(String(person.faction_id).toUpperCase()));
+                line.append(fac);
+            }
+            if (person.clan_tag) {
+                const tag = el('span', 'feed-clan-tag');
+                if (person.clan_color) tag.style.color = person.clan_color;
+                tag.append(text('[' + person.clan_tag + ']'));
+                line.append(tag);
+            }
+            parent.append(line);
+        },
+
+        _syncLikeStateFromPost(post, force) {
+            const postId = String(post.id);
+            if (!this._feedLikes) this._feedLikes = {};
+            if (!force && this._feedLikePending && this._feedLikePending[postId]) return;
+            this._feedLikes[postId] = {
+                likesCount: Math.max(0, Number(post.likes_count) || 0),
+                likedByViewer: !!Number(post.liked_by_viewer),
+            };
+        },
+
+        _paintFeedLikeCounts() {
+            if (!this._feedLikes) return;
+            Object.keys(this._feedLikes).forEach((postId) => {
+                const st = this._feedLikes[postId];
+                document.querySelectorAll('[data-feed-like="' + postId + '"]').forEach((btn) => {
+                    btn.classList.toggle('feed-liked', st.likedByViewer);
+                    btn.disabled = !!(this._feedLikePending && this._feedLikePending[postId]);
+                    const countEl = btn.querySelector('.feed-like-count');
+                    if (countEl) countEl.textContent = String(st.likesCount);
+                });
+            });
+        },
+
+        _mergeFeedRefresh(data) {
+            const prev = this.apps.feed || {};
+            ['global', 'contacts'].forEach((tab) => {
+                const incoming = data[tab];
+                if (!incoming) return;
+                const map = new Map();
+                ((prev[tab] && prev[tab].posts) || []).forEach((p) => map.set(String(p.id), p));
+                (incoming.posts || []).forEach((p) => {
+                    this._syncLikeStateFromPost(p, false);
+                    const merged = Object.assign({}, map.get(String(p.id)) || {}, p);
+                    map.set(String(p.id), merged);
+                });
+                const posts = Array.from(map.values()).sort((a, b) => Number(b.id) - Number(a.id));
+                prev[tab] = { posts, nextCursor: incoming.nextCursor };
+            });
+            this.apps.feed = prev;
+        },
+
+        _patchFeedScroll() {
+            const tab = this._feedTab || 'contacts';
+            const posts = (this.apps.feed && this.apps.feed[tab] && this.apps.feed[tab].posts) || [];
+            const scroll = document.querySelector('.feed-scroll');
+            if (!scroll) return;
+            const existing = new Set();
+            scroll.querySelectorAll('[data-feed-post-id]').forEach((node) => existing.add(node.dataset.feedPostId));
+            posts.forEach((p) => {
+                const id = String(p.id);
+                if (!existing.has(id)) {
+                    scroll.insertBefore(this._buildFeedCard(p, true), scroll.firstChild);
+                    existing.add(id);
+                }
+                const cm = scroll.querySelector('[data-feed-cmcount="' + id + '"]');
+                if (cm) cm.textContent = String(Number(p.comments_count) || 0);
+            });
+            this._paintFeedLikeCounts();
+        },
+
+        refreshFeedQuiet() {
+            this._feedRefreshSeq = (this._feedRefreshSeq || 0) + 1;
+            post('phoneAction', { op: 'feedRefresh', token: this.token, refreshSeq: this._feedRefreshSeq });
+        },
+
         _feedRelTime(raw) {
             if (!raw) return '';
             try {
@@ -2317,22 +2480,23 @@
 
         _buildFeedCard(feedPost, clickable) {
             const self = this;
-            if (!this._feedLikes) this._feedLikes = {};
             const postId = String(feedPost.id);
-            const likeState = this._feedLikes[postId] || { likesCount: Number(feedPost.likes_count) || 0, likedByViewer: !!Number(feedPost.liked_by_viewer) };
-            this._feedLikes[postId] = likeState;
+            this._syncLikeStateFromPost(feedPost, true);
+            const likeState = this._feedLikes[postId];
 
             const card = el('div', 'feed-card');
             card.dataset.feedPostId = postId;
 
             // Header
             const header = el('div', 'feed-card-header');
-            const avatar = el('div', 'feed-avatar');
-            const initials = ((feedPost.firstname || '?')[0] + (feedPost.lastname || '?')[0]).toUpperCase();
-            avatar.append(text(initials));
+            const avatar = this._buildPedAvatar(feedPost);
+            avatar.addEventListener('click', (e) => {
+                e.stopPropagation();
+                feedPost.character_id && self.openFeedProfile(feedPost.character_id);
+            });
             const authorWrap = el('div', 'feed-author-wrap');
             const authorName = el('div', 'feed-author-name');
-            authorName.append(text((feedPost.firstname || '') + ' ' + (feedPost.lastname || '')));
+            this._appendIdentityLine(authorName, feedPost);
             authorName.addEventListener('click', () => {
                 feedPost.character_id && self.openFeedProfile(feedPost.character_id);
             });
@@ -2365,8 +2529,12 @@
             // Photo
             if (feedPost.media_url) {
                 const img = document.createElement('img');
-                img.src = feedPost.media_url;
+                const mediaUrl = this.safeMediaUrl(feedPost.media_url) || feedPost.media_url;
+                img.src = mediaUrl;
                 img.className = 'feed-photo';
+                if (feedPost.width && feedPost.height) {
+                    img.style.aspectRatio = String(feedPost.width) + ' / ' + String(feedPost.height);
+                }
                 img.loading = 'lazy';
                 img.addEventListener('click', () => {
                     if (window.Phone && Phone.openMediaViewer) Phone.openMediaViewer(feedPost.media_url);
@@ -2386,11 +2554,23 @@
             likeBtn.append(heartSvg, likeCount);
             likeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const isLiked = likeBtn.classList.contains('feed-liked');
-                post('phoneAction', { op: isLiked ? 'feedUnlike' : 'feedLike', postId: feedPost.id, token: self.token });
-                likeBtn.classList.toggle('feed-liked', !isLiked);
-                const cur = parseInt(likeCount.textContent) || 0;
-                likeCount.textContent = String(isLiked ? Math.max(0, cur - 1) : cur + 1);
+                if (self._feedLikePending && self._feedLikePending[postId]) return;
+                const isLiked = !!likeState.likedByViewer;
+                const seq = (self._feedLikeSeq = (self._feedLikeSeq || 0) + 1);
+                if (!self._feedLikePending) self._feedLikePending = {};
+                self._feedLikePending[postId] = { seq, prevState: { ...likeState } };
+                const nextLiked = !isLiked;
+                self._feedLikes[postId] = {
+                    likesCount: Math.max(0, likeState.likesCount + (nextLiked ? 1 : -1)),
+                    likedByViewer: nextLiked,
+                };
+                self._paintFeedLikeCounts();
+                post('phoneAction', {
+                    op: nextLiked ? 'feedLike' : 'feedUnlike',
+                    postId: feedPost.id,
+                    token: self.token,
+                    seq,
+                });
             });
 
             const cmBtn = el('button', 'feed-action-btn');
@@ -2430,16 +2610,20 @@
 
         _appendFeedComment(comment) {
             const list = document.getElementById('feed-comment-list');
-            if (!list) return;
+            if (!list || !comment || !comment.id) return;
+            if (!this._feedCommentIds) this._feedCommentIds = new Set();
+            const cid = String(comment.id);
+            if (this._feedCommentIds.has(cid)) return;
+            this._feedCommentIds.add(cid);
+            list.querySelector('.feed-no-comments')?.remove();
             const item = this._buildCommentItem(comment);
             list.append(item);
         },
 
         _buildCommentItem(comment) {
             const wrap = el('div', 'feed-comment' + (comment.parent_comment_id ? ' feed-comment-reply' : ''));
-            const initials = ((comment.firstname || '?')[0] + (comment.lastname || '?')[0]).toUpperCase();
-            const av = el('div', 'feed-cm-avatar');
-            av.append(text(initials));
+            wrap.dataset.commentId = String(comment.id || '');
+            const av = this._buildPedAvatar(comment, 'feed-cm-avatar');
             const body = el('div', 'feed-cm-body');
             const name = el('span', 'feed-cm-name');
             name.append(text((comment.firstname || '') + ' ' + (comment.lastname || '')));
@@ -2524,7 +2708,7 @@
             if (this._feedPollTimer) clearTimeout(this._feedPollTimer);
             this._feedPollTimer = setTimeout(function poll() {
                 if (self.current() !== 'feed') return;
-                self.load('feed');
+                self.refreshFeedQuiet();
                 self._feedPollTimer = setTimeout(poll, 12000);
             }, 12000);
 
@@ -2561,13 +2745,17 @@
 
             const cmList = el('div', 'feed-comment-list');
             cmList.id = 'feed-comment-list';
+            this._feedCommentIds = new Set();
             const comments = data.comments || [];
             if (!comments.length) {
                 const none = el('div', 'muted feed-no-comments');
                 none.append(text(t('phone.ui.feed_no_comments')));
                 cmList.append(none);
             } else {
-                comments.forEach((c) => cmList.append(this._buildCommentItem(c)));
+                comments.forEach((c) => {
+                    this._feedCommentIds.add(String(c.id));
+                    cmList.append(this._buildCommentItem(c));
+                });
             }
             cmSection.append(cmList);
 
@@ -2576,11 +2764,30 @@
             const cmInput = el('textarea', 'feed-cm-input');
             cmInput.placeholder = t('phone.ui.feed_add_comment');
             cmInput.maxLength = 400;
+            cmInput.addEventListener('keydown', (e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    cmSend.click();
+                }
+            });
             const cmSend = btn('btn-gold feed-cm-send', t('phone.ui.feed_send'), () => {
                 const body = cmInput.value.trim();
-                if (!body) return;
-                cmInput.value = '';
+                if (!body || self._feedCommentBusy) return;
+                self._feedCommentBusy = true;
+                cmSend.disabled = true;
+                const draft = cmInput.value;
                 post('phoneAction', { op: 'feedComment', postId: data.post.id, body: body, token: self.token });
+                self._feedCommentDraft = draft;
+                self._feedCommentPendingClear = () => {
+                    self._feedCommentBusy = false;
+                    cmSend.disabled = false;
+                    if (self._feedCommentDraftCleared) {
+                        cmInput.value = '';
+                    } else {
+                        cmInput.value = self._feedCommentDraft || draft;
+                    }
+                };
             });
             cmComposer.append(cmInput, cmSend);
             cmSection.append(cmComposer);
@@ -2609,12 +2816,18 @@
             const scroll = el('div', 'phone-app-scroll');
 
             const profileCard = el('div', 'feed-profile-card');
-            const av = el('div', 'feed-profile-avatar');
-            const initials = ((data.profile.name || '?? ').split(' ').map((w) => w[0] || '').join('')).toUpperCase().slice(0, 2);
-            av.append(text(initials));
+            const profilePerson = {
+                firstname: (data.profile.name || '').split(' ')[0] || '',
+                lastname: (data.profile.name || '').split(' ').slice(1).join(' ') || '',
+                author_skin: data.profile.author_skin,
+                faction_id: data.profile.faction_id,
+                clan_tag: data.profile.clan_tag,
+                clan_color: data.profile.clan_color,
+            };
+            const av = this._buildPedAvatar(profilePerson, 'feed-profile-avatar');
             const info = el('div', 'feed-profile-info');
             const name = el('div', 'feed-profile-name');
-            name.append(text(data.profile.name || ''));
+            this._appendIdentityLine(name, profilePerson);
             const posts = el('div', 'feed-profile-sub');
             posts.append(text(String(data.profile.postCount || 0) + ' ' + t('phone.ui.feed_posts')));
             info.append(name, posts);
@@ -2952,37 +3165,190 @@
             page.append(scroll);
         },
 
+        _cameraBusy() {
+            const s = this._cameraCapture || 'ready';
+            return s === 'capturing' || s === 'saving';
+        },
+
+        _cameraShutter() {
+            if (!document.getElementById('phone-device')?.classList.contains('is-camera')) return;
+            if (this._cameraBusy()) return;
+            post('phoneAction', { op: 'cameraShutter' });
+        },
+
+        _flushCameraLook() {
+            if (!this._cameraLookPending) return;
+            const p = this._cameraLookPending;
+            this._cameraLookPending = null;
+            post('phoneAction', { op: 'cameraLook', dx: p.dx, dy: p.dy, aim: true });
+        },
+
+        _queueCameraLook(dx, dy) {
+            if (!this._cameraAim) return;
+            if (!this._cameraLookPending) this._cameraLookPending = { dx: 0, dy: 0 };
+            this._cameraLookPending.dx += dx;
+            this._cameraLookPending.dy += dy;
+            if (this._cameraLookRaf) return;
+            this._cameraLookRaf = requestAnimationFrame(() => {
+                this._cameraLookRaf = 0;
+                this._flushCameraLook();
+            });
+        },
+
+        _updateCameraLensUi(mode, lens) {
+            const wrap = $('phone-camera-lenses');
+            if (!wrap) return;
+            wrap.classList.toggle('is-hidden', mode === 'selfie');
+            const id = String(lens || '1');
+            wrap.querySelectorAll('.phone-camera-lens').forEach((btn) => {
+                btn.classList.toggle('is-active', btn.getAttribute('data-lens') === id);
+            });
+        },
+
+        _setCameraCaptureState(state) {
+            this._cameraCapture = state || 'ready';
+            const hud = $('phone-camera-hud');
+            const status = $('phone-camera-status');
+            const shutter = $('phone-camera-shutter');
+            const busy = this._cameraBusy();
+            if (hud) {
+                hud.classList.toggle('is-capturing', busy || state === 'capturing');
+            }
+            if (shutter) shutter.disabled = busy;
+            if (!status) return;
+            let label = '';
+            if (state === 'capturing') label = '';
+            else if (state === 'saving') label = t('phone.ui.camera_saving');
+            else if (state === 'saved') label = t('phone.ui.camera_saved_gallery');
+            else if (state === 'error') label = t('phone.ui.photo_upload_failed');
+            status.textContent = label;
+            status.hidden = !label;
+            if (state === 'saved') {
+                clearTimeout(this._cameraStatusTimer);
+                this._cameraStatusTimer = setTimeout(() => {
+                    if (this._cameraCapture === 'saved') this._setCameraCaptureState('ready');
+                }, 2200);
+            }
+            if (state === 'capturing') {
+                const flash = $('phone-camera-flash');
+                if (flash) {
+                    flash.classList.add('is-flash');
+                    setTimeout(() => flash.classList.remove('is-flash'), 140);
+                }
+            }
+        },
+
+        _refreshCameraRollThumb(animate) {
+            const roll = $('phone-camera-roll');
+            if (!roll) return;
+            const url = this._lastPhoto ? this.safeMediaUrl(this._lastPhoto.thumbnailUrl || this._lastPhoto.url) : '';
+            roll.style.backgroundImage = url ? `url("${url}")` : '';
+            roll.style.backgroundSize = 'cover';
+            if (animate) {
+                roll.classList.remove('phone-camera-roll--pop');
+                void roll.offsetWidth;
+                roll.classList.add('phone-camera-roll--pop');
+            }
+        },
+
         bindCameraHud() {
             if (this._cameraHud) return;
             this._cameraHud = true;
+            this._cameraCapture = 'ready';
+            this._cameraAim = false;
             const stage = $('phone-camera-stage');
             const shutter = $('phone-camera-shutter');
             const flip = $('phone-camera-flip');
             const close = $('phone-camera-close');
             const roll = $('phone-camera-roll');
-            if (stage) {
-                stage.addEventListener('mousemove', (event) => {
-                    if (!$('phone-device')?.classList.contains('is-camera')) return;
-                    if (!this._lookOrigin) this._lookOrigin = { x: event.clientX, y: event.clientY };
-                    const dx = event.clientX - this._lookOrigin.x;
-                    const dy = event.clientY - this._lookOrigin.y;
-                    this._lookOrigin = { x: event.clientX, y: event.clientY };
-                    if (!dx && !dy) return;
-                    post('phoneAction', { op: 'cameraLook', dx: dx, dy: dy });
-                });
-                stage.addEventListener('wheel', (event) => {
-                    if (!$('phone-device')?.classList.contains('is-camera')) return;
-                    event.preventDefault();
-                    post('phoneAction', { op: 'cameraZoom', delta: event.deltaY > 0 ? 0.08 : -0.08 });
-                }, { passive: false });
-            }
-            shutter?.addEventListener('click', () => post('phoneAction', { op: 'cameraShutter' }));
-            flip?.addEventListener('click', () => post('phoneAction', { op: 'cameraFlip' }));
-            close?.addEventListener('click', () => post('phoneAction', { op: 'cameraClose' }));
-            roll?.addEventListener('click', () => {
+            const lenses = $('phone-camera-lenses');
+
+            const inCamera = () => $('phone-device')?.classList.contains('is-camera');
+
+            const isUiTarget = (target) => {
+                if (!target || !target.closest) return false;
+                return !!target.closest('[data-camera-ui="1"]');
+            };
+
+            stage?.addEventListener('contextmenu', (e) => e.preventDefault());
+            stage?.addEventListener('dragstart', (e) => e.preventDefault());
+
+            stage?.addEventListener('pointerdown', (event) => {
+                if (!inCamera() || event.button !== 2) return;
+                if (isUiTarget(event.target)) return;
+                event.preventDefault();
+                this._cameraAim = true;
+                stage.classList.add('is-aiming');
+                try { stage.setPointerCapture(event.pointerId); } catch (e) { /* ignore */ }
+            });
+
+            stage?.addEventListener('pointermove', (event) => {
+                if (!inCamera() || !this._cameraAim) return;
+                if (event.buttons !== 2 && event.pointerType === 'mouse') return;
+                this._queueCameraLook(event.movementX || 0, event.movementY || 0);
+            });
+
+            const endAim = (event) => {
+                if (event && event.button !== undefined && event.button !== 2) return;
+                if (!this._cameraAim) return;
+                this._cameraAim = false;
+                stage?.classList.remove('is-aiming');
+                this._cameraLookPending = null;
+                if (event && stage?.hasPointerCapture?.(event.pointerId)) {
+                    try { stage.releasePointerCapture(event.pointerId); } catch (e) { /* ignore */ }
+                }
+            };
+            stage?.addEventListener('pointerup', endAim);
+            stage?.addEventListener('pointercancel', endAim);
+            window.addEventListener('blur', () => endAim({}));
+
+            stage?.addEventListener('wheel', (event) => {
+                if (!inCamera() || this._cameraBusy()) return;
+                if (isUiTarget(event.target)) return;
+                event.preventDefault();
+                const delta = event.deltaY > 0 ? 1 : -1;
+                post('phoneAction', { op: 'cameraZoom', delta });
+            }, { passive: false });
+
+            shutter?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._cameraShutter();
+            });
+            flip?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this._cameraBusy()) return;
+                post('phoneAction', { op: 'cameraFlip' });
+            });
+            close?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                post('phoneAction', { op: 'cameraClose' });
+            });
+            roll?.addEventListener('click', (e) => {
+                e.stopPropagation();
                 post('phoneAction', { op: 'cameraClose' });
                 this.openApp('gallery');
             });
+            lenses?.querySelectorAll('.phone-camera-lens').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (this._cameraBusy()) return;
+                    const lens = btn.getAttribute('data-lens');
+                    post('phoneAction', { op: 'cameraLens', lens });
+                });
+            });
+
+            this._cameraKeyHandler = (event) => {
+                if (!inCamera()) return;
+                if (event.repeat) return;
+                if (event.code === 'Space') {
+                    event.preventDefault();
+                    this._cameraShutter();
+                } else if (event.code === 'KeyF') {
+                    event.preventDefault();
+                    if (!this._cameraBusy()) post('phoneAction', { op: 'cameraFlip' });
+                }
+            };
+            window.addEventListener('keydown', this._cameraKeyHandler);
         },
 
         setCamera(payload) {
@@ -2993,28 +3359,37 @@
                 device.classList.remove('is-camera');
                 hud.hidden = true;
                 hud.classList.remove('is-capturing');
+                this._cameraAim = false;
+                $('phone-camera-stage')?.classList.remove('is-aiming');
+                this._setCameraCaptureState('ready');
                 return;
             }
             device.classList.add('is-open');
             device.classList.add('is-camera');
             hud.hidden = false;
-            hud.classList.toggle('is-capturing', payload.chrome === false);
+            const chromeHidden = payload.chrome === false;
+            hud.classList.toggle('is-capturing', chromeHidden);
             const flip = $('phone-camera-flip');
             const close = $('phone-camera-close');
-            if (flip) flip.textContent = payload.mode === 'selfie' ? t('phone.ui.rear_camera') : t('phone.ui.front_camera');
-            if (close) close.textContent = '×';
-            const roll = $('phone-camera-roll');
-            if (roll && this._lastPhoto) {
-                const url = this.safeMediaUrl(this._lastPhoto.thumbnailUrl || this._lastPhoto.url);
-                roll.style.backgroundImage = url ? 'url("' + url + '")' : '';
-                roll.style.backgroundSize = 'cover';
+            if (flip) {
+                flip.textContent = payload.mode === 'selfie' ? '⟲' : '⟲';
+                flip.title = payload.mode === 'selfie' ? t('phone.ui.rear_camera') : t('phone.ui.front_camera');
             }
+            if (close) {
+                close.textContent = '×';
+                close.title = t('phone.ui.close');
+            }
+            this._updateCameraLensUi(payload.mode, payload.lens);
+            this._refreshCameraRollThumb(false);
+            if (payload.captureState) this._setCameraCaptureState(payload.captureState);
+            else if (payload.chrome !== false) this._setCameraCaptureState('ready');
         },
 
         onCameraResult(payload) {
             const media = payload && payload.media;
             if (!media || !media.id) return;
             this._lastPhoto = media;
+            this._refreshCameraRollThumb(true);
             if (payload.returnTo === 'conversation') {
                 this._draftAttachment = { type: 'photo', mediaId: media.id, url: media.url, thumbnailUrl: media.thumbnailUrl };
                 this._keepDraft = true;

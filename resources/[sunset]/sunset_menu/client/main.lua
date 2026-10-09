@@ -512,6 +512,10 @@ RegisterNetEvent('sunset:client:vehicleUpdated', function(update)
     cachedExtrasAt = 0
     local ok, menuData = pcall(buildMenuData, true)
     if ok and menuData then
+        if menuSoloMode == 'vehicle' then
+            local sig = vehicleMenuSignature(menuData.vehicles)
+            lastVehicleMenuPush = sig
+        end
         exports.sunset_ui:Send('menuUpdate', menuData)
     end
 end)
@@ -602,22 +606,55 @@ CreateThread(function()
 end)
 
 local lastMenuPush = nil
+local lastVehicleMenuPush = nil
+
+local function flag01(value)
+    if value == true or value == 1 or value == '1' then return '1' end
+    return '0'
+end
+
+local function vehicleMenuSignature(vehicles)
+    local parts = {}
+    for _, v in ipairs(vehicles or {}) do
+        parts[#parts + 1] = table.concat({
+            tostring(v.id),
+            tostring(v.plate or ''),
+            tostring(v.stored),
+            flag01(v.inWorld),
+            flag01(v.destroyed),
+            flag01(v.isCurrentVehicle),
+            tostring(v.garage or ''),
+        }, ':')
+    end
+    return table.concat(parts, '|')
+end
+
 CreateThread(function()
     while true do
         if menuOpen then
             local ok, data = pcall(buildMenuData)
             if ok and data then
-                -- [PERF] Change detection: skip the NUI message (and the page re-render)
-                -- when nothing in the menu payload changed since the last push.
-                local okJ, enc = pcall(json.encode, data)
-                if not okJ or enc ~= lastMenuPush then
-                    lastMenuPush = okJ and enc or nil
-                    exports.sunset_ui:Send('menuUpdate', data)
+                if menuSoloMode == 'vehicle' then
+                    -- /v panel: ignore live fuel/engine jitter; only re-push when ownership state changes.
+                    local sig = vehicleMenuSignature(data.vehicles)
+                    if sig ~= lastVehicleMenuPush then
+                        lastVehicleMenuPush = sig
+                        exports.sunset_ui:Send('menuUpdate', data)
+                    end
+                else
+                    -- [PERF] Change detection: skip the NUI message (and the page re-render)
+                    -- when nothing in the menu payload changed since the last push.
+                    local okJ, enc = pcall(json.encode, data)
+                    if not okJ or enc ~= lastMenuPush then
+                        lastMenuPush = okJ and enc or nil
+                        exports.sunset_ui:Send('menuUpdate', data)
+                    end
                 end
             end
-            Wait(800)
+            Wait(menuSoloMode == 'vehicle' and 1200 or 800)
         else
             lastMenuPush = nil
+            lastVehicleMenuPush = nil
             Wait(500)
         end
     end

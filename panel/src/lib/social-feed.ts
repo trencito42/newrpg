@@ -89,6 +89,55 @@ export async function fetchSocialPostsForCharacter(
   });
 }
 
+export interface FeedComment {
+  id: number;
+  post_id: number;
+  character_id: number;
+  firstname: string;
+  lastname: string;
+  faction_id: string | null;
+  author_skin: string | null;
+  clan_tag: string | null;
+  clan_color: string | null;
+  clan_tag_style: string | null;
+  parent_comment_id: number | null;
+  body: string;
+  created_at: string;
+  updated_at: string | null;
+}
+
+interface CommentRow extends RowDataPacket, FeedComment {}
+
+const COMMENT_SELECT = `
+  SELECT c.id, c.post_id, c.character_id, ch.firstname, ch.lastname,
+         JSON_UNQUOTE(JSON_EXTRACT(ch.metadata, '$.faction')) AS faction_id,
+         JSON_UNQUOTE(JSON_EXTRACT(ch.metadata, '$.skin')) AS author_skin,
+         cl.tag AS clan_tag, cl.tag_color AS clan_color, cl.tag_style AS clan_tag_style,
+         c.parent_comment_id, c.body, c.created_at, c.updated_at
+  FROM social_comments c
+  JOIN characters ch ON ch.id = c.character_id
+  LEFT JOIN clan_members clanm ON clanm.character_id = ch.id
+  LEFT JOIN clans cl ON cl.id = clanm.clan_id
+`;
+
+export async function fetchSocialComments(
+  postId: number,
+  beforeId?: number | null,
+  limit = 30
+): Promise<FeedComment[]> {
+  const params: number[] = [postId];
+  let extra = "";
+  if (beforeId) {
+    extra = " AND c.id < ?";
+    params.push(beforeId);
+  }
+  params.push(Math.min(limit, 100));
+  return dbQuery<CommentRow>(
+    `${COMMENT_SELECT} WHERE c.post_id = ? AND c.deleted_at IS NULL${extra} ORDER BY c.id ASC LIMIT ?`,
+    params
+  );
+}
+
 export async function countSocialPostsForCharacter(characterId: number): Promise<number> {
   interface C extends RowDataPacket { cnt: number }
   const row = await dbQuerySingle<C>(

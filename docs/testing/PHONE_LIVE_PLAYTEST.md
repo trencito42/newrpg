@@ -60,6 +60,10 @@ Static checks do not prove these. Run them in FiveM after deploy. Mark each LIVE
 | Share map waypoint | Only when a waypoint exists | Finite coordinates inside world bounds | NaN or an unbounded coordinate is stored |
 | Recipient Set GPS | In-phone GPS set, GTA waypoint appears | Existing phone GPS path | A second waypoint implementation |
 | Camera cleanup | ESC returns to the phone; death, jail, and resource restart clear the cam | HUD, controls, and the phone prop recover | Stuck script cam, hidden HUD, or NUI focus |
+| Rear camera framing | World ahead is visible; local ped body is not in frame | Script cam at chest-forward offset; local ped invisible only in rear mode | Shoulders, arms, or torso in ultrawide |
+| Lens presets | 0.5× / 1× / 2× change FOV only (≈90° / 55° / 32°) | No camera dolly through the ped | Zoom moves the lens into the character |
+| Camera aim (desktop) | RMB drag on preview aims; moving to shutter without RMB does not rotate | `cameraLook` only with `aim: true` | Camera spins when hovering UI |
+| Capture UX | Flash + hidden chrome during shot; Saving… then Saved to gallery after commit | Shutter disabled while pending; sound after commit | False “saved” before upload, or HUD in photo |
 | Character switch | Character B has none of A's photos, draft, or camera | Gallery query is B's character id | A's photo stays attached to B's composer |
 | No base64 payload | NUI and MySQL store URLs only | `phone_messages` has no data URL | A screenshot blob in the message or gallery row |
 
@@ -137,3 +141,18 @@ SMS stays in Messages. Text typed with T during an ACTIVE call is live speech be
 - [ ] Player avatar upload still works
 - [ ] Vehicle preview upload still works
 - [ ] A missing, expired, or reused upload token is rejected
+
+## Phone camera acceptance (manual)
+
+1. Rear camera beside a vehicle: player body not visible in preview or saved photo.
+2. Rear camera at headings 0°, 90°, 180°, 270°: street/world ahead, no self in frame.
+3. Ultrawide (0.5×): more scene, still no character in frame.
+4. Selfie: face and upper body centered and natural.
+5. Move mouse toward shutter without RMB: camera does not rotate.
+6. Hold RMB and move: smooth yaw/pitch; release RMB: rotation stops.
+7. Space: exactly one photo captured (no double on key repeat).
+8. Five sequential shutters: five gallery rows, no duplicates from one press.
+9. Successful save: “Saved to gallery” and thumbnail update after commit (not before).
+10. Failed upload (disconnect token or block upload): error shown, controls return, no false success.
+11. ESC, death, character switch, jail, `ensure sunset_phone` restart: no stuck script cam, cursor, HUD, anim, or focus.
+12. SMS composer camera: photo attaches to the same conversation thread.

@@ -23,12 +23,24 @@
         </div>
     </div>
     <div id="phone-camera-hud" class="phone-camera-hud" hidden>
-        <div id="phone-camera-stage" class="phone-camera-stage"></div>
-        <div class="phone-camera-bar">
-            <button type="button" id="phone-camera-close" class="phone-camera-side"></button>
-            <button type="button" id="phone-camera-shutter" class="phone-shutter"></button>
-            <button type="button" id="phone-camera-flip" class="phone-camera-side"></button>
-            <button type="button" id="phone-camera-roll" class="phone-camera-roll"></button>
+        <div class="phone-camera-top">
+            <button type="button" id="phone-camera-close" class="phone-camera-icon-btn" data-camera-ui="1" aria-label="" data-i18n-aria="phone.ui.close"></button>
+            <span id="phone-camera-status" class="phone-camera-status" hidden></span>
+            <button type="button" id="phone-camera-flip" class="phone-camera-icon-btn" data-camera-ui="1" aria-label="" data-i18n-aria="phone.ui.camera_flip_lens"></button>
+        </div>
+        <div id="phone-camera-stage" class="phone-camera-stage" aria-label="" data-i18n-aria="phone.ui.camera_preview"></div>
+        <div class="phone-camera-flash" id="phone-camera-flash" aria-hidden="true"></div>
+        <div class="phone-camera-bottom" data-camera-ui="1">
+            <div class="phone-camera-lenses" id="phone-camera-lenses" role="group" aria-label="" data-i18n-aria="phone.ui.camera_lens_group">
+                <button type="button" class="phone-camera-lens" data-lens="0.5">0.5×</button>
+                <button type="button" class="phone-camera-lens is-active" data-lens="1">1×</button>
+                <button type="button" class="phone-camera-lens" data-lens="2">2×</button>
+            </div>
+            <div class="phone-camera-bar">
+                <button type="button" id="phone-camera-roll" class="phone-camera-roll" data-camera-ui="1" aria-label="" data-i18n-aria="phone.ui.gallery"></button>
+                <button type="button" id="phone-camera-shutter" class="phone-shutter" data-camera-ui="1" aria-label="" data-i18n-aria="phone.ui.camera_shutter"></button>
+                <span class="phone-camera-bar-spacer" aria-hidden="true"></span>
+            </div>
         </div>
     </div>
 </div>
