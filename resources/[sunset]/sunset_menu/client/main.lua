@@ -5,6 +5,29 @@ local mugshotAt = 0
 local mugshotHandle = nil
 local cachedExtras = nil
 local cachedExtrasAt = 0
+local lastMenuPush = nil
+local lastVehicleMenuPush = nil
+
+local function flag01(value)
+    if value == true or value == 1 or value == '1' then return '1' end
+    return '0'
+end
+
+local function vehicleMenuSignature(vehicles)
+    local parts = {}
+    for _, v in ipairs(vehicles or {}) do
+        parts[#parts + 1] = table.concat({
+            tostring(v.id),
+            tostring(v.plate or ''),
+            tostring(v.stored),
+            flag01(v.inWorld),
+            flag01(v.destroyed),
+            flag01(v.isCurrentVehicle),
+            tostring(v.garage or ''),
+        }, ':')
+    end
+    return table.concat(parts, '|')
+end
 
 local function releaseMugshot()
     if mugshotHandle then
@@ -604,30 +627,6 @@ CreateThread(function()
         end
     end
 end)
-
-local lastMenuPush = nil
-local lastVehicleMenuPush = nil
-
-local function flag01(value)
-    if value == true or value == 1 or value == '1' then return '1' end
-    return '0'
-end
-
-local function vehicleMenuSignature(vehicles)
-    local parts = {}
-    for _, v in ipairs(vehicles or {}) do
-        parts[#parts + 1] = table.concat({
-            tostring(v.id),
-            tostring(v.plate or ''),
-            tostring(v.stored),
-            flag01(v.inWorld),
-            flag01(v.destroyed),
-            flag01(v.isCurrentVehicle),
-            tostring(v.garage or ''),
-        }, ':')
-    end
-    return table.concat(parts, '|')
-end
 
 CreateThread(function()
     while true do

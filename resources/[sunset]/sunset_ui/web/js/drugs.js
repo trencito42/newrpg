@@ -639,6 +639,7 @@ const Drugs = {
             this.currentPrice = this.basePrice;
             this.riskLevel = data.risk || 'low';
             this.sessionToken = data.token || null;
+            this.negotiationChallenge = data.negotiation || null;
 
             const wrap = document.getElementById('sale-wrapper');
             const statusMsg = document.getElementById('sale-status-msg');
@@ -733,13 +734,24 @@ const Drugs = {
             const actionsEl = document.getElementById('sale-actions');
             const negoBox = document.getElementById('sale-nego-box');
             const targetZoneEl = document.getElementById('sale-target-zone');
+            const statusMsg = document.getElementById('sale-status-msg');
 
             if (actionsEl) actionsEl.style.display = 'none';
             if (negoBox) negoBox.style.display = 'flex';
 
             this.targetWidth = Number(this.negotiationChallenge?.targetWidth) || 20;
             this.targetPos = Number(this.negotiationChallenge?.targetPos);
-            if (!Number.isFinite(this.targetPos)) return this.close();
+            if (!Number.isFinite(this.targetPos)) {
+                this.isNegotiating = false;
+                if (actionsEl) actionsEl.style.display = 'flex';
+                if (negoBox) negoBox.style.display = 'none';
+                if (statusMsg) {
+                    statusMsg.className = 'fail';
+                    statusMsg.innerText = I18n.t('interface.failed');
+                    statusMsg.style.display = 'block';
+                }
+                return;
+            }
             if (targetZoneEl) {
                 targetZoneEl.style.left = `${this.targetPos}%`;
                 targetZoneEl.style.width = `${this.targetWidth}%`;

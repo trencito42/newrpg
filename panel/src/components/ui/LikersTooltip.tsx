@@ -60,6 +60,10 @@ export function LikersTooltip({ count, fetchUrl, children, disabled, locale = "e
 
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
+  useEffect(() => {
+    setLikers(null);
+  }, [count, fetchUrl]);
+
   return (
     <div
       ref={containerRef}
@@ -88,7 +92,7 @@ export function LikersTooltip({ count, fetchUrl, children, disabled, locale = "e
 
             return (
               <Link
-                key={i}
+                key={`${l.username}-${i}`}
                 href={`/players/${encodeURIComponent(l.username)}`}
                 className="flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[rgba(255,255,255,0.06)] transition-colors"
                 onClick={hide}

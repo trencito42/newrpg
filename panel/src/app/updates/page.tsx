@@ -4,6 +4,7 @@ import { UpdatesClientFeed, UpdateItem } from "./UpdatesClientFeed";
 import { RowDataPacket } from "mysql2";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { t } from "@/lib/i18n";
+import { playerIdentityKey, resolvePlayerIdentitiesByRefs } from "@/lib/player-identity";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -62,9 +63,17 @@ export default async function UpdatesPage() {
     [accountId]
   );
 
+  const authorIdentities = await resolvePlayerIdentitiesByRefs(
+    rawUpdates.map((item) => ({
+      accountId: item.author_account_id,
+      username: item.author_name,
+    }))
+  );
+
   const updates: UpdateItem[] = rawUpdates.map((item) => {
-    let authorSkin: string | null = null;
-    if (item.author_metadata) {
+    const identity = authorIdentities.get(playerIdentityKey(item.author_account_id));
+    let authorSkin: string | null = identity?.skin ?? null;
+    if (!authorSkin && item.author_metadata) {
       try {
         const meta = typeof item.author_metadata === "string" ? JSON.parse(item.author_metadata) : item.author_metadata;
         if (meta?.skin) authorSkin = String(meta.skin);
@@ -81,6 +90,10 @@ export default async function UpdatesPage() {
       author_account_id: item.author_account_id,
       author_name: item.author_name,
       author_skin: authorSkin,
+      author_faction_id: identity?.factionId ?? null,
+      author_clan_tag: identity?.clanTag ?? null,
+      author_clan_color: identity?.clanColor ?? null,
+      author_clan_tag_style: identity?.clanTagStyle ?? null,
       is_pinned: item.is_pinned,
       views_count: item.views_count,
       likes_count: Number(item.likes_count ?? 0),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { dbExecute, dbQuerySingle } from "@/lib/db";
+import { clearCharacterUpdateReactionsForAccount } from "@/lib/update-reaction-sync";
 import { isSameOriginWrite } from "@/lib/request-security";
 import { RowDataPacket } from "mysql2";
 
@@ -65,6 +66,7 @@ export async function POST(
         [update.id, session.accountId]
       );
     } else {
+      await clearCharacterUpdateReactionsForAccount(update.id, session.accountId);
       await dbExecute(
         `INSERT INTO panel_update_reactions (update_id, reactor_type, reactor_id, reaction)
          VALUES (?, 'account', ?, ?)

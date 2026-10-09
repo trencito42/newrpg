@@ -32,7 +32,7 @@ export function HomeSocialPreviewCard({
       data-social-preview-card
       className={cn(
         CARD_SLIDE,
-        "group flex flex-col h-[240px] rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0E0E10]",
+        "group flex flex-col h-[280px] rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#0E0E10]",
         "hover:border-[rgba(255,255,255,0.14)] hover:bg-[#101012] transition-colors",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D7B558]/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0C]",
         "overflow-hidden p-3"
@@ -58,29 +58,32 @@ export function HomeSocialPreviewCard({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 flex gap-2.5">
-        <div className="flex-1 min-w-0 min-h-0">
-          {hasBody ? (
-            <p className="text-xs text-[#D4CFC8] leading-relaxed line-clamp-5 whitespace-pre-wrap break-words">
-              {post.body}
-            </p>
-          ) : hasMedia ? (
-            <p className="text-xs text-[#8F8B83] flex items-center gap-1.5">
-              <ImageIcon className="w-3.5 h-3.5 shrink-0 opacity-80" aria-hidden />
-              {t(locale, "community.shared_photo")}
-            </p>
-          ) : (
-            <p className="text-xs text-[#8F8B83] line-clamp-2">{t(locale, "community.view_post")}</p>
-          )}
-        </div>
+      <div className="flex-1 min-h-0 flex flex-col gap-2 min-w-0">
+        {hasBody ? (
+          <p
+            className={cn(
+              "text-xs text-[#D4CFC8] leading-relaxed whitespace-pre-wrap break-words shrink-0",
+              hasMedia ? "line-clamp-3" : "line-clamp-5"
+            )}
+          >
+            {post.body}
+          </p>
+        ) : hasMedia ? (
+          <p className="text-xs text-[#8F8B83] flex items-center gap-1.5 shrink-0">
+            <ImageIcon className="w-3.5 h-3.5 shrink-0 opacity-80" aria-hidden />
+            {t(locale, "community.shared_photo")}
+          </p>
+        ) : (
+          <p className="text-xs text-[#8F8B83] line-clamp-2 shrink-0">{t(locale, "community.view_post")}</p>
+        )}
         {hasMedia && thumbSrc ? (
           <div
-            className="w-[72px] h-[72px] shrink-0 rounded-md border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] overflow-hidden flex items-center justify-center"
+            className="flex-1 min-h-[120px] w-full rounded-md border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.25)] overflow-hidden flex items-center justify-center"
           >
             <img
               src={thumbSrc}
               alt=""
-              className="max-w-full max-h-full w-auto h-auto object-contain"
+              className="w-full h-full max-h-[140px] object-contain"
               loading="lazy"
               draggable={false}
             />

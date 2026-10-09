@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbExecute, dbQuerySingle } from "@/lib/db";
+import { clearAccountUpdateReactionForCharacter } from "@/lib/update-reaction-sync";
 import { RowDataPacket } from "mysql2";
 
 interface ExistingReaction extends RowDataPacket {
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
         [updateId, characterId]
       );
     } else {
+      await clearAccountUpdateReactionForCharacter(updateId, characterId);
       // Insert or switch reaction
       await dbExecute(
         `INSERT INTO panel_update_reactions (update_id, reactor_type, reactor_id, reaction)

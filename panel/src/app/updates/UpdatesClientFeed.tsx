@@ -24,6 +24,7 @@ import { t, formatDate } from "@/lib/i18n";
 import { GTAImage } from "@/components/ui/GTAImage";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
 import { LikersTooltip } from "@/components/ui/LikersTooltip";
+import { PlayerIdentity } from "@/components/ui/PlayerIdentity";
 
 export interface UpdateItem {
   id: number;
@@ -35,6 +36,10 @@ export interface UpdateItem {
   author_account_id: number;
   author_name: string;
   author_skin?: string | null;
+  author_faction_id?: string | null;
+  author_clan_tag?: string | null;
+  author_clan_color?: string | null;
+  author_clan_tag_style?: string | null;
   is_pinned: number;
   views_count: number;
   likes_count: number;
@@ -315,7 +320,15 @@ export function UpdatesClientFeed({
                           <User className="w-3 h-3 text-[#D7B558]" />
                         )}
                       </div>
-                      <span className="font-semibold">{item.author_name}</span>
+                      <PlayerIdentity
+                        username={item.author_name}
+                        factionId={item.author_faction_id}
+                        clanTag={item.author_clan_tag}
+                        clanColor={item.author_clan_color}
+                        clanTagStyle={item.author_clan_tag_style}
+                        size="sm"
+                        clickable={false}
+                      />
                     </div>
 
                     <div className="flex items-center space-x-3">
@@ -421,7 +434,15 @@ export function UpdatesClientFeed({
                             <User className="w-3 h-3 text-[#D7B558]" />
                           )}
                         </div>
-                        <span className="font-semibold">{item.author_name}</span>
+                        <PlayerIdentity
+                          username={item.author_name}
+                          factionId={item.author_faction_id}
+                          clanTag={item.author_clan_tag}
+                          clanColor={item.author_clan_color}
+                          clanTagStyle={item.author_clan_tag_style}
+                          size="sm"
+                          clickable={false}
+                        />
                       </div>
                       <div className="flex items-center space-x-2">
                         <span className="flex items-center space-x-1">
