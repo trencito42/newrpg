@@ -11,6 +11,7 @@ export function PollCountdown({
   targetDate: string;
   locale?: Locale;
 }) {
+  const [ready, setReady] = useState(false);
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
     hours: number;
@@ -36,9 +37,19 @@ export function PollCountdown({
     }
 
     calculate();
+    setReady(true);
     const interval = setInterval(calculate, 1000);
     return () => clearInterval(interval);
   }, [targetDate]);
+
+  if (!ready) {
+    return (
+      <span className="inline-flex items-center space-x-1.5 text-xs font-mono text-[#8F8B83] bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded min-w-[4.5rem] justify-center">
+        <Clock className="w-3 h-3 opacity-60" />
+        <span>…</span>
+      </span>
+    );
+  }
 
   if (timeLeft.expired) {
     return (

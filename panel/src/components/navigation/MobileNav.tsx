@@ -70,6 +70,15 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   const isStaffMember = session && (session.adminLevel >= 1 || session.helperLevel >= 1);
   const isAdmin = session && session.adminLevel >= 1;
 

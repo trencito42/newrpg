@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Vote, Plus, Crown, Calendar, Sparkles, CheckCircle2 } from "lucide-react";
 import { PollCountdown } from "@/components/polls/PollCountdown";
 import { CreatePollModal } from "@/components/polls/CreatePollModal";
-import { t, formatDate } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
+import { formatPollClosedEndLabel } from "@/lib/poll-display";
 
 export interface PollItem {
   id: number;
@@ -93,7 +94,7 @@ export function PollsClientView({ polls, canCreate, locale }: PollsClientViewPro
                     <PollCountdown targetDate={p.ends_at} locale={locale} />
                   ) : (
                     <span className="text-[11px] text-[#8F8B83] font-mono">
-                      {t(locale, "interface.ended")} {formatDate(p.ends_at, locale, false)}
+                      {formatPollClosedEndLabel(locale, p.ends_at)}
                     </span>
                   )}
                 </div>

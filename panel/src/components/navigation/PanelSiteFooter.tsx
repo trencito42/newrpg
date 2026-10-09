@@ -22,7 +22,9 @@ export function PanelSiteFooter({ locale }: { locale: Locale }) {
       <p className="text-[#A5A196]">
         {t(locale, "interface.panel_footer_version", { version: panelBrand.panelVersion })}
       </p>
-      <p className="mt-0.5 opacity-80">{t(locale, "interface.panel_footer_stable")}</p>
+      {process.env.NODE_ENV !== "production" && (
+        <p className="mt-0.5 opacity-80">{t(locale, "interface.panel_footer_stable")}</p>
+      )}
     </footer>
   );
 }

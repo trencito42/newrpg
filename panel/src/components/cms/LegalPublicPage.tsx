@@ -54,6 +54,11 @@ export async function LegalPublicPage({
 
   return (
     <div className="space-y-4 w-full">
+      {page.isDraft && (
+        <p className="text-xs text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+          {t(locale, "cmsUi.legal_draft_public_notice")}
+        </p>
+      )}
       <div className="pb-2 border-b border-white/[0.06]">
         <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">{page.title}</h1>
         <p className="mt-1 text-xs text-[#8F8B83]">

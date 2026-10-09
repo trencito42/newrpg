@@ -152,6 +152,7 @@ export default async function FactionDetailPage({
   const description = descriptionOverride || t(locale, faction.descriptionKey);
   const rulesMarkdown = (locale === "ro" ? profile?.rules_ro : profile?.rules_en) ?? null;
   const includeRanks = gradeLabels.length > 0;
+  const gradeLabelByGrade = new Map(gradeLabels.map((g) => [g.grade, g.label]));
   const tab = parseFactionTab(tabRaw, includeRanks, canViewLogs);
 
   const isMember = session
@@ -249,9 +250,14 @@ export default async function FactionDetailPage({
                     />
                   </td>
                   <td className="px-3.5 py-2.5 font-mono text-[#F2EFE8]">
-                    {t(locale, "copy.app_clans_id_manage_clanmanageclient.rank")} {m.job_grade}
-                    {m.job_grade >= 7 && <span className="ml-1.5 text-[10px] text-amber-400 font-bold">{t(locale, "interface.leader")}</span>}
-                    {m.job_grade === 6 && <span className="ml-1.5 text-[10px] text-blue-400 font-bold">{t(locale, "interface.co_leader")}</span>}
+                    {gradeLabelByGrade.get(m.job_grade) ??
+                      `${t(locale, "copy.app_clans_id_manage_clanmanageclient.rank")} ${m.job_grade}`}
+                    {(leader?.character_id === m.id || m.job_grade >= 7) && (
+                      <span className="ml-1.5 text-[10px] text-amber-400 font-bold">{t(locale, "interface.leader")}</span>
+                    )}
+                    {leader?.character_id !== m.id && m.job_grade === 6 && (
+                      <span className="ml-1.5 text-[10px] text-blue-400 font-bold">{t(locale, "interface.co_leader")}</span>
+                    )}
                   </td>
                   <td className="px-3.5 py-2.5 text-center font-mono">{m.level}</td>
                   <td className="px-3.5 py-2.5 text-right font-mono text-[#8F8B83]">

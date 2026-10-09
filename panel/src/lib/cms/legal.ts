@@ -49,15 +49,29 @@ export async function fetchPublishedLegalBySlug(slug: string, locale: Locale): P
   }
 }
 
-export async function fetchPublishedLegalByKey(key: string, locale: Locale): Promise<PublicLegalPage | null> {
+export async function fetchPublishedLegalByKey(
+  key: string,
+  locale: Locale
+): Promise<(PublicLegalPage & { isDraft?: boolean }) | null> {
   try {
-    const row = await dbQuerySingle<LegalRow>(
+    let row = await dbQuerySingle<LegalRow>(
       `SELECT page_key, slug, title_en, title_ro, content_en, content_ro, effective_at, updated_at, version
        FROM panel_legal_pages
        WHERE page_key = ? AND status = 'published'
        LIMIT 1`,
       [key]
     );
+    let isDraft = false;
+    if (!row) {
+      row = await dbQuerySingle<LegalRow>(
+        `SELECT page_key, slug, title_en, title_ro, content_en, content_ro, effective_at, updated_at, version
+         FROM panel_legal_pages
+         WHERE page_key = ? AND status = 'draft'
+         LIMIT 1`,
+        [key]
+      );
+      isDraft = !!row;
+    }
     if (!row) return null;
     const ro = locale === "ro";
     return {
@@ -68,6 +82,7 @@ export async function fetchPublishedLegalByKey(key: string, locale: Locale): Pro
       effectiveAt: row.effective_at,
       updatedAt: row.updated_at,
       version: row.version,
+      isDraft,
     };
   } catch {
     return null;

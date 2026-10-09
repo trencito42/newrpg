@@ -22,8 +22,40 @@ function extractShopLocale(luaPath) {
   return map;
 }
 
-const gameEn = extractShopLocale(path.join(root, 'resources/[sunset]/sunset_core/shared/locales/en.lua'));
-const gameRo = extractShopLocale(path.join(root, 'resources/[sunset]/sunset_core/shared/locales/ro.lua'));
+function extractShopUiFromGenerated(jsPath, locale) {
+  const src = fs.readFileSync(jsPath, 'utf8');
+  const re = new RegExp(`"${locale}"\\s*:\\s*\\{`);
+  const head = src.match(re);
+  if (!head || head.index == null) return {};
+  let start = head.index + head[0].length;
+  let depth = 1;
+  let i = start;
+  while (i < src.length && depth > 0) {
+    const ch = src[i];
+    if (ch === '{') depth += 1;
+    else if (ch === '}') depth -= 1;
+    i += 1;
+  }
+  const block = src.slice(start, i - 1);
+  const map = {};
+  for (const m of block.matchAll(/"(shop\.[^"]+)"\s*:\s*"((?:\\.|[^"\\])*)"/g)) {
+    map[m[1]] = m[2].replace(/\\"/g, '"');
+  }
+  for (const m of block.matchAll(/"(clans\.err\.clan_is_expired)"\s*:\s*"((?:\\.|[^"\\])*)"/g)) {
+    map[m[1]] = m[2].replace(/\\"/g, '"');
+  }
+  return map;
+}
+
+const i18nGenerated = path.join(root, 'resources/[sunset]/sunset_ui/web/js/i18n.generated.js');
+const gameEn = {
+  ...extractShopLocale(path.join(root, 'resources/[sunset]/sunset_core/shared/locales/en.lua')),
+  ...extractShopUiFromGenerated(i18nGenerated, 'en'),
+};
+const gameRo = {
+  ...extractShopLocale(path.join(root, 'resources/[sunset]/sunset_core/shared/locales/ro.lua')),
+  ...extractShopUiFromGenerated(i18nGenerated, 'ro'),
+};
 const localeOutPath = path.join(root, 'panel/src/generated/shop-game-locales.ts');
 
 const banner = `/* eslint-disable */

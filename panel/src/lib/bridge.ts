@@ -82,13 +82,24 @@ export async function getAggregatedServerStats(): Promise<AggregatedStats> {
     moneyRow,
   ] = await Promise.all([
     dbQuerySingle<CountRow>("SELECT COUNT(*) AS count FROM accounts"),
-    dbQuerySingle<CountRow>("SELECT COUNT(*) AS count FROM characters"),
+    dbQuerySingle<CountRow>(
+      `SELECT COUNT(*) AS count FROM characters c
+       JOIN players p ON p.id = c.player_id
+       JOIN accounts a ON a.id = p.account_id
+       WHERE a.username NOT IN ('anticheat')`
+    ),
     dbQuerySingle<CountRow>("SELECT COUNT(*) AS count FROM vehicles"),
     dbQuerySingle<CountRow>("SELECT COUNT(*) AS count FROM properties"),
     dbQuerySingle<CountRow>("SELECT COUNT(*) AS count FROM clans"),
     dbQuerySingle<CountRow>("SELECT COUNT(*) AS count FROM turfs WHERE owner_clan_id IS NOT NULL"),
     dbQuerySingle<CountRow>("SELECT COUNT(*) AS count FROM admin_sanctions"),
-    dbQuerySingle<SumRow>("SELECT SUM(cash + bank) AS total FROM characters"),
+    dbQuerySingle<SumRow>(
+      `SELECT COALESCE(SUM(c.cash + c.bank), 0) AS total
+       FROM characters c
+       JOIN players p ON p.id = c.player_id
+       JOIN accounts a ON a.id = p.account_id
+       WHERE a.username NOT IN ('anticheat')`
+    ),
   ]);
 
   return {

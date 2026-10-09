@@ -16,7 +16,7 @@ export function PlayerVehiclesSection({
     <div>
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xs font-semibold text-[#8F8B83] uppercase tracking-wider">
-          {t(locale, "interface.vehicles_2")} ({vehicles.length})
+          {t(locale, "interface.vehicles")} ({vehicles.length})
         </h2>
       </div>
 

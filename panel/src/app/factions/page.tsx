@@ -118,7 +118,8 @@ export default async function FactionsPage() {
                   )}
                 </span>
                 <span className="font-mono text-[#B4AFA4] text-xs">
-                  {f.memberCount} {t(locale, "interface.members")}
+                  {f.memberCount}{" "}
+                  {f.memberCount === 1 ? t(locale, "interface.member_singular") : t(locale, "interface.members")}
                 </span>
               </div>
             </Link>

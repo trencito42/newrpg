@@ -33,6 +33,7 @@ import {
   horizontalCardSlideClass,
 } from "@/components/ui/HorizontalCardScroller";
 import { getPedAvatarUrl } from "@/lib/gta-assets";
+import { CANONICAL_FACTIONS } from "@/lib/factions";
 
 interface PollRow extends RowDataPacket {
   id: number;
@@ -240,7 +241,7 @@ export default async function HomePage() {
           </div>
 
           {/* Right: Quick Action Controls */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto lg:justify-end min-w-0">
             {panelBrand.connectAddress && (
               <HomeCopyButton address={panelBrand.connectAddress} locale={locale} />
             )}
@@ -495,7 +496,7 @@ export default async function HomePage() {
               </Link>
 
               <Link
-                href="/factions/ems"
+                href="/factions/medic"
                 className="p-3 rounded-lg bg-[#121214] hover:bg-[#18181D] transition-colors text-center space-y-1 group"
               >
                 <span className="text-[10px] font-mono uppercase font-bold text-red-400 block">EMS</span>
@@ -513,11 +514,13 @@ export default async function HomePage() {
               </Link>
 
               <Link
-                href="/factions/tow"
+                href="/factions/mechanic"
                 className="p-3 rounded-lg bg-[#121214] hover:bg-[#18181D] transition-colors text-center space-y-1 group"
               >
-                <span className="text-[10px] font-mono uppercase font-bold text-emerald-400 block">TOW</span>
-                <span className="text-xs font-semibold text-[#F2EFE8] group-hover:text-emerald-300 transition-colors block">{t(locale, "interface.towing_service")}</span>
+                <span className="text-[10px] font-mono uppercase font-bold text-emerald-400 block">
+                  {t(locale, "interface.faction_abbr_mechanic")}
+                </span>
+                <span className="text-xs font-semibold text-[#F2EFE8] group-hover:text-emerald-300 transition-colors block">{CANONICAL_FACTIONS.mechanic.label}</span>
                 <span className="text-[10px] text-[#8F8B83] block">{t(locale, "interface.recruitment_open")}</span>
               </Link>
             </div>

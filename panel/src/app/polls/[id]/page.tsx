@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getViewerLocale, getCurrentSession } from "@/lib/auth";
 import { dbQuery, dbQuerySingle } from "@/lib/db";
 import { t, formatDate } from "@/lib/i18n";
+import { formatPollClosedEndLabel } from "@/lib/poll-display";
 import { ArrowLeft, CheckCircle2, Crown } from "lucide-react";
 import { PollCountdown } from "@/components/polls/PollCountdown";
 import { PollVoteForm } from "@/components/polls/PollVoteForm";
@@ -131,7 +132,7 @@ export default async function PollDetailPage({
               <PollCountdown targetDate={poll.ends_at} locale={locale} />
             ) : (
               <span className="text-[11px] text-[#8F8B83] font-mono">
-                {t(locale, "interface.ended")} {formatDate(poll.ends_at, locale)}
+                {formatPollClosedEndLabel(locale, poll.ends_at)}
               </span>
             )}
           </div>

@@ -203,7 +203,7 @@ export default async function ServerStatsPage() {
     ...topCollectors.map((p) => p.name),
   ];
   const identities = await resolvePlayerIdentities(allNames);
-  const totalEconomy = (counts?.total_cash || 0) + (counts?.total_bank || 0);
+  const totalEconomy = Number(counts?.total_cash || 0) + Number(counts?.total_bank || 0);
 
   return (
     <div className="space-y-4 sm:space-y-6">
