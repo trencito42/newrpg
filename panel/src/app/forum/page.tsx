@@ -7,6 +7,7 @@ import type { Forum, ForumCategory, ForumCategoryWithForums } from "@/lib/forum-
 import type { RowDataPacket } from "mysql2";
 import Link from "next/link";
 import { t, formatRelativeTime } from "@/lib/i18n";
+import { forumPostLabel, forumTopicLabel } from "@/lib/forum-labels";
 import { MessageSquare, Lock, Megaphone, Newspaper, BookOpen, MessageCircle, Camera, Lightbulb, HelpCircle, Bug, Flag, Shield, Heart, Users, Car, Building2, Home, Package } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -100,24 +101,32 @@ export default async function ForumIndexPage() {
   const lastPosterMap = await resolveForumAuthorIdentities(lastPosterRefs);
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 max-w-5xl w-full">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight uppercase">
+          <h1 className="text-xl font-bold text-[#F2EFE8] tracking-tight">
             {t(locale, "forumUi.title")}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs text-[#8F8B83] mt-1">
             {t(locale, "forumUi.community_subtitle")}
           </p>
         </div>
-        {session && (
+        <div className="flex items-center gap-3 text-xs">
           <Link
-            href="/forum/my"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            href="/forum/search"
+            className="text-[#A5A196] hover:text-[#F2EFE8] transition-colors font-medium"
           >
-            {t(locale, "forumUi.my_activity")}
+            {t(locale, "forumUi.search_forum")}
           </Link>
-        )}
+          {session && (
+            <Link
+              href="/forum/my"
+              className="text-[#A5A196] hover:text-[#F2EFE8] transition-colors"
+            >
+              {t(locale, "forumUi.my_activity")}
+            </Link>
+          )}
+        </div>
       </div>
 
       {categoryList.map((cat) => (
@@ -169,11 +178,11 @@ export default async function ForumIndexPage() {
                   <div className="hidden sm:flex items-center gap-6 text-xs text-muted-foreground flex-shrink-0">
                     <div className="text-center">
                       <div className="font-semibold text-foreground">{forum.topic_count.toLocaleString()}</div>
-                      <div>{t(locale, "forumUi.topics")}</div>
+                      <div>{forumTopicLabel(locale, forum.topic_count)}</div>
                     </div>
                     <div className="text-center">
                       <div className="font-semibold text-foreground">{forum.post_count.toLocaleString()}</div>
-                      <div>{t(locale, "forumUi.posts")}</div>
+                      <div>{forumPostLabel(locale, forum.post_count)}</div>
                     </div>
                   </div>
 
@@ -222,20 +231,6 @@ export default async function ForumIndexPage() {
         </div>
       ))}
 
-      {/* Footer actions */}
-      <div className="flex items-center justify-between pt-2 border-t border-border text-xs text-muted-foreground">
-        <Link href="/forum/search" className="hover:text-foreground transition-colors">
-          {t(locale, "forumUi.search_forum")}
-        </Link>
-        {session && (
-          <button
-            onClick={undefined}
-            className="hover:text-foreground transition-colors cursor-default"
-          >
-            {t(locale, "forumUi.mark_all_read")}
-          </button>
-        )}
-      </div>
     </div>
   );
 }

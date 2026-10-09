@@ -141,9 +141,11 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
           {session ? (
             <Link
               href="/account"
-              className="w-7 h-7 rounded-lg bg-surface-200 flex items-center justify-center text-[#F2EFE8] font-bold text-xs"
+              aria-label={t(locale, "nav.account")}
+              title={session.username}
+              className="min-h-[44px] min-w-[44px] rounded-lg bg-surface-200 flex items-center justify-center text-[#F2EFE8] font-bold text-xs shrink-0"
             >
-              {session.username.charAt(0).toUpperCase()}
+              <User className="w-4 h-4" aria-hidden />
             </Link>
           ) : (
             <Link

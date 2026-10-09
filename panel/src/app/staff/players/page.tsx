@@ -139,7 +139,7 @@ export default async function StaffPlayersPage({ searchParams }: Props) {
 
                     <td className="px-3 py-2.5 text-center font-mono">
                       <span className="text-[#F2EFE8] font-semibold">{t(locale, "interface.lvl")} {p.level || 1}</span>
-                      <span className="text-[#8F8B83] ml-1.5 text-[11px]">({p.hours || 0}{t(locale, "interface.h")}</span>
+                      <span className="text-[#8F8B83] ml-1.5 text-[11px]">({p.hours || 0}{t(locale, "interface.h")})</span>
                     </td>
 
                     <td className="px-3 py-2.5">

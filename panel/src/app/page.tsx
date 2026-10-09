@@ -143,6 +143,8 @@ export default async function HomePage() {
     });
   }
 
+  const pollPreviewOptions = pollOptions.slice(0, 2);
+
   // Load latest updates & patch notes
   const latestUpdateRow = await dbQuerySingle<UpdatePostRow>(
     `SELECT id, slug, title, summary, category, cover_image, author_name, is_pinned, views_count, created_at
@@ -225,7 +227,7 @@ export default async function HomePage() {
   );
 
   return (
-    <div className="space-y-8 max-w-[1280px] mx-auto w-full">
+    <div className="space-y-6 max-w-[1280px] mx-auto w-full">
       {/* Hero Live Server Header */}
       <div className="rounded-xl bg-[#0E0E10] border border-[rgba(255,255,255,0.06)] p-4 sm:p-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
@@ -359,114 +361,8 @@ export default async function HomePage() {
 
       {/* TWO COLUMNS: FEATURED POLL / MAYOR ELECTION + LEADERBOARD */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 cols): Active Poll / Mayor Election */}
-        <div className="lg:col-span-2 space-y-4">
-          {featuredPoll ? (
-            <div className="rounded-xl bg-[#0E0E10] p-5 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-surface-border">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-[#D7B558]/10 flex items-center justify-center text-[#D7B558]">
-                    <Vote className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-[#D7B558] uppercase tracking-wider">
-                      {featuredPoll.category === "mayor" ? (t(locale, "copy.app_page.mayor_elections")) : (t(locale, "copy.app_page.active_community_poll"))}
-                    </span>
-                    <h2 className="text-base font-bold text-[#F2EFE8]">
-                      {locale === "ro" ? featuredPoll.title_ro : featuredPoll.title_en}
-                    </h2>
-                  </div>
-                </div>
-
-                <PollCountdown targetDate={featuredPoll.ends_at} locale={locale} />
-              </div>
-
-              {featuredPoll.description_ro && (
-                <p className="text-xs text-[#A5A196] leading-relaxed">
-                  {locale === "ro" ? featuredPoll.description_ro : (featuredPoll.description_en || featuredPoll.description_ro)}
-                </p>
-              )}
-
-              {/* Poll Options / Candidate Cards */}
-              <div className="space-y-3">
-                {pollOptions.map((opt) => {
-                  const total = featuredPoll.total_votes || 1;
-                  const pct = Math.round((opt.votes_count / total) * 100);
-                  const candidateAvatar = opt.candidate_skin ? getPedAvatarUrl(opt.candidate_skin) : null;
-
-                  return (
-                    <div
-                      key={opt.id}
-                      className="p-3 rounded-lg bg-[#121214] space-y-2"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {candidateAvatar && (
-                            <div className="w-8 h-8 rounded-full bg-[#1C1C20] overflow-hidden shrink-0">
-                              <GTAImage
-                                src={candidateAvatar}
-                                alt={opt.candidate_name || opt.label_ro}
-                                width={32}
-                                height={32}
-                                className="w-full h-full object-cover object-top"
-                              />
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <span className="font-semibold text-xs text-[#F2EFE8] block truncate">
-                              {locale === "ro" ? opt.label_ro : opt.label_en}
-                            </span>
-                            {opt.candidate_slogan && (
-                              <span className="text-[11px] text-[#D7B558] italic block truncate">
-                                "{opt.candidate_slogan}"
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <span className="font-mono text-xs font-bold text-[#F2EFE8] shrink-0">
-                          {opt.votes_count} ({pct}%)
-                        </span>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="w-full bg-[#1A1A1E] rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-[#D7B558] h-full rounded-full transition-all duration-300"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Poll Footer */}
-              <div className="pt-3 border-t border-surface-border flex items-center justify-between">
-                <span className="text-xs text-[#8F8B83] font-mono">
-                  {t(locale, "polls.total_votes", { count: featuredPoll.total_votes })}
-                </span>
-                <Link
-                  href={`/polls/${featuredPoll.id}`}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded-lg text-xs transition-colors"
-                >
-                  <Vote className="w-3.5 h-3.5" />
-                  <span>{t(locale, "home.vote_now")}</span>
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="p-8 rounded-xl bg-[#0E0E10] text-center space-y-2">
-              <Vote className="w-8 h-8 text-[#8F8B83] mx-auto opacity-50" />
-              <h3 className="text-xs font-bold text-[#F2EFE8]">
-                {t(locale, "copy.app_page.no_active_polls_at_the_moment")}
-              </h3>
-              <p className="text-[11px] text-[#8F8B83]">
-                {t(locale, "copy.app_page.stay_tuned_for_upcoming_elections_and_community_votes")}
-              </p>
-            </div>
-          )}
-
+        {/* Left Column (2 cols): Factions + active poll preview */}
+        <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
           {/* Official Factions Overview Banner */}
           <div className="rounded-xl bg-[#0E0E10] p-4 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-surface-border">
@@ -525,10 +421,124 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
+
+          {featuredPoll ? (
+            <div className="rounded-xl bg-[#0E0E10] p-4 sm:p-5 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-surface-border">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#D7B558]/10 flex items-center justify-center text-[#D7B558]">
+                    <Vote className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-[#D7B558] uppercase tracking-wider">
+                      {featuredPoll.category === "mayor" ? (t(locale, "copy.app_page.mayor_elections")) : (t(locale, "copy.app_page.active_community_poll"))}
+                    </span>
+                    <h2 className="text-base font-bold text-[#F2EFE8]">
+                      {locale === "ro" ? featuredPoll.title_ro : featuredPoll.title_en}
+                    </h2>
+                  </div>
+                </div>
+
+                <PollCountdown targetDate={featuredPoll.ends_at} locale={locale} />
+              </div>
+
+              {featuredPoll.description_ro && (
+                <p className="text-xs text-[#A5A196] leading-relaxed">
+                  {locale === "ro" ? featuredPoll.description_ro : (featuredPoll.description_en || featuredPoll.description_ro)}
+                </p>
+              )}
+
+              {/* Poll Options / Candidate Cards */}
+              <div className="space-y-3">
+                {pollPreviewOptions.map((opt) => {
+                  const total = featuredPoll.total_votes || 1;
+                  const pct = Math.round((opt.votes_count / total) * 100);
+                  const candidateAvatar = opt.candidate_skin ? getPedAvatarUrl(opt.candidate_skin) : null;
+
+                  return (
+                    <div
+                      key={opt.id}
+                      className="p-3 rounded-lg bg-[#121214] space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {candidateAvatar && (
+                            <div className="w-8 h-8 rounded-full bg-[#1C1C20] overflow-hidden shrink-0">
+                              <GTAImage
+                                src={candidateAvatar}
+                                alt={opt.candidate_name || opt.label_ro}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover object-top"
+                              />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <span className="font-semibold text-xs text-[#F2EFE8] block truncate">
+                              {locale === "ro" ? opt.label_ro : opt.label_en}
+                            </span>
+                            {opt.candidate_slogan && (
+                              <span className="text-[11px] text-[#D7B558] italic block truncate">
+                                "{opt.candidate_slogan}"
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <span className="font-mono text-xs font-bold text-[#F2EFE8] shrink-0">
+                          {opt.votes_count} ({pct}%)
+                        </span>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="w-full bg-[#1A1A1E] rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-[#D7B558] h-full rounded-full transition-all duration-300"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {pollOptions.length > pollPreviewOptions.length && (
+                <p className="text-[11px] text-center text-[#8F8B83]">
+                  {t(locale, "home.poll_more_candidates", {
+                    count: pollOptions.length - pollPreviewOptions.length,
+                  })}
+                </p>
+              )}
+
+              {/* Poll Footer */}
+              <div className="pt-3 border-t border-surface-border flex items-center justify-between">
+                <span className="text-xs text-[#8F8B83] font-mono">
+                  {t(locale, "polls.total_votes", { count: featuredPoll.total_votes })}
+                </span>
+                <Link
+                  href={`/polls/${featuredPoll.id}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#D7B558] hover:bg-[#E3C572] text-[#08080A] font-bold rounded-lg text-xs transition-colors"
+                >
+                  <Vote className="w-3.5 h-3.5" />
+                  <span>{t(locale, "home.vote_now")}</span>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 rounded-xl bg-[#0E0E10] text-center space-y-2">
+              <Vote className="w-8 h-8 text-[#8F8B83] mx-auto opacity-50" />
+              <h3 className="text-xs font-bold text-[#F2EFE8]">
+                {t(locale, "copy.app_page.no_active_polls_at_the_moment")}
+              </h3>
+              <p className="text-[11px] text-[#8F8B83]">
+                {t(locale, "copy.app_page.stay_tuned_for_upcoming_elections_and_community_votes")}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Right Column (1 col): Top Leaderboards & Clans */}
-        <div className="space-y-5">
+        <div className="space-y-5 order-1 lg:order-2 lg:sticky lg:top-4 self-start">
           {/* Top Richest & Leveled Leaderboard Widget */}
           <HomeLeaderboardTabs
             richest={richestPlayers}
