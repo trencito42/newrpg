@@ -99,6 +99,7 @@ export default async function RootLayout({
           <MobileNav
             locale={locale}
             session={viewerSession}
+            identity={viewerIdentity}
             serverOnline={serverStatus.online}
             playerCount={serverStatus.playerCount}
           />

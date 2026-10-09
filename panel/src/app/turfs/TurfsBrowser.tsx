@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { t, formatCurrency, type Locale } from "@/lib/i18n";
+import { TurfMapOverview } from "./TurfMapOverview";
 
 export type TurfCardData = {
   id: number;
@@ -13,6 +14,7 @@ export type TurfCardData = {
   clan_tag: string | null;
   clan_name: string | null;
   clan_color: string | null;
+  polygon: Array<{ x: number; y: number }> | null;
 };
 
 type Filter = "all" | "controlled" | "unclaimed";
@@ -28,6 +30,7 @@ export function TurfsBrowser({
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -88,6 +91,16 @@ export function TurfsBrowser({
         </div>
       </div>
 
+      <TurfMapOverview
+        locale={locale}
+        turfs={turfs}
+        highlightedId={highlightedId}
+        onSelect={(id) => {
+          setHighlightedId(id);
+          document.getElementById(`turf-card-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }}
+      />
+
       {filtered.length === 0 ? (
         <p className="text-sm text-[#8F8B83] text-center py-10 rounded-xl bg-[#0E0E10]">
           {t(locale, "turfs.no_matches")}
@@ -97,7 +110,12 @@ export function TurfsBrowser({
           {filtered.map((turf) => {
             const isControlled = turf.owner_clan_id !== null;
             return (
-              <div key={turf.id} className="p-3.5 sm:p-4 bg-[#0E0E10] rounded-xl flex flex-col justify-between">
+              <div
+                id={`turf-card-${turf.id}`}
+                className={`p-3.5 sm:p-4 bg-[#0E0E10] rounded-xl flex flex-col justify-between transition-colors ${
+                  highlightedId === turf.id ? "ring-1 ring-[#D7B558]/50" : ""
+                }`}
+              >
                 <div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[11px] font-mono text-[#8F8B83] uppercase tracking-wider">

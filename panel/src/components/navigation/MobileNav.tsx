@@ -43,15 +43,19 @@ import { ViewerSessionDTO } from "@/lib/types";
 import { LanguageToggle } from "./LanguageToggle";
 import { cn } from "@/lib/utils";
 import { NavSection } from "./NavSection";
+import { GTAImage } from "@/components/ui/GTAImage";
+import { getPedAvatarUrl } from "@/lib/gta-assets";
+import type { ResolvedPlayerIdentity } from "@/lib/player-identity";
 
 interface MobileNavProps {
   locale: Locale;
   session: ViewerSessionDTO | null;
+  identity: ResolvedPlayerIdentity | null;
   serverOnline: boolean;
   playerCount: number;
 }
 
-export function MobileNav({ locale, session, serverOnline, playerCount }: MobileNavProps) {
+export function MobileNav({ locale, session, identity, serverOnline, playerCount }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -140,12 +144,20 @@ export function MobileNav({ locale, session, serverOnline, playerCount }: Mobile
           <LanguageToggle currentLocale={locale} isAuthenticated={Boolean(session)} />
           {session ? (
             <Link
-              href="/account"
-              aria-label={t(locale, "nav.account")}
+              href={`/players/${encodeURIComponent(session.username)}`}
+              aria-label={session.username}
               title={session.username}
-              className="min-h-[44px] min-w-[44px] rounded-lg bg-surface-200 flex items-center justify-center text-[#F2EFE8] font-bold text-xs shrink-0"
+              className="w-11 h-11 min-h-[44px] min-w-[44px] rounded-lg bg-surface-200 border border-surface-border overflow-hidden flex items-center justify-center shrink-0"
             >
-              <User className="w-4 h-4" aria-hidden />
+              <GTAImage
+                src={getPedAvatarUrl(identity?.skin)}
+                alt=""
+                aria-hidden
+                fallbackText={session.username.charAt(0).toUpperCase()}
+                width={44}
+                height={44}
+                className="w-11 h-11 max-w-full max-h-full object-cover object-top"
+              />
             </Link>
           ) : (
             <Link

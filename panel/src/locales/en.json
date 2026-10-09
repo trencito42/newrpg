@@ -573,6 +573,8 @@
     "filter_unclaimed": "Unclaimed",
     "search_placeholder": "Search territory or clan…",
     "no_matches": "No territories match your filters.",
+    "map_title": "Territory map",
+    "map_hint": "Tap a zone to jump to details",
     "title": "Territories",
     "subtitle": "Explore contested territories.",
     "controlled_by": "Controlled By",

@@ -573,6 +573,8 @@
     "filter_unclaimed": "Neocupate",
     "search_placeholder": "Caută teritoriu sau clan…",
     "no_matches": "Niciun teritoriu nu corespunde filtrelor.",
+    "map_title": "Hartă teritorii",
+    "map_hint": "Apasă o zonă pentru detalii",
     "title": "Teritorii",
     "subtitle": "Descoperă teritoriile disputate.",
     "controlled_by": "Controlat De",

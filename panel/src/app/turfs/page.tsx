@@ -23,13 +23,27 @@ interface TurfRow extends RowDataPacket {
   clan_name: string | null;
   clan_tag: string | null;
   clan_color: string | null;
+  polygon: string | Array<{ x: number; y: number }> | null;
+}
+
+function parseTurfPolygon(
+  raw: string | Array<{ x: number; y: number }> | null
+): Array<{ x: number; y: number }> | null {
+  if (!raw) return null;
+  if (Array.isArray(raw)) return raw;
+  try {
+    const parsed = JSON.parse(raw) as Array<{ x: number; y: number }>;
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 export default async function TurfsPage() {
   const locale = await getViewerLocale();
 
   const turfs = await dbQuery<TurfRow>(
-    `SELECT t.id, t.name, t.payout, t.owner_clan_id, cl.name AS clan_name, cl.tag AS clan_tag, cl.tag_color AS clan_color
+    `SELECT t.id, t.name, t.payout, t.owner_clan_id, t.polygon, cl.name AS clan_name, cl.tag AS clan_tag, cl.tag_color AS clan_color
      FROM turfs t
      LEFT JOIN clans cl ON cl.id = t.owner_clan_id
      ORDER BY t.id ASC`
@@ -49,6 +63,7 @@ export default async function TurfsPage() {
         clan_name: row.clan_name,
         clan_tag: row.clan_tag,
         clan_color: row.clan_color,
+        polygon: parseTurfPolygon(row.polygon),
       }))}
     />
   );
